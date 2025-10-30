@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>数学函数绘图工具</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+        .toolbar {
+            width: 200px;
+            background-color: #f0f0f0;
+            border-right: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .toolbar h3 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .function-item {
+            padding: 8px;
+            margin: 5px 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: grab;
+            text-align: center;
+        }
+        .function-item:active {
+            cursor: grabbing;
+        }
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .input-area {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .input-area input {
+            padding: 8px;
+            width: 300px;
+            margin-right: 10px;
+        }
+        .input-area button {
+            padding: 8px 15px;
+        }
+        .graph-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        #graphContainer {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    
+    <!-- 设置库的基路径 -->
+    <script type="text/javascript">
+        mxBasePath = '../node_modules/mxgraph/javascript/src';
+    </script>
+    
+    <!-- 加载并初始化库 -->
+    <script type="text/javascript" src="../node_modules/mxgraph/javascript/mxClient.js"></script>
+    
+    <script type="text/javascript">
+        // 创建图形的函数
+        function main() {
+            // 检查浏览器兼容性
+            if (!mxClient.isBrowserSupported()) {
+                mxUtils.error('浏览器不支持！', 200, false);
+                return;
+            }
+            
+            // 获取图形容器
+            var container = document.getElementById('graphContainer');
+            
+            // 禁用内置的上下文菜单
+            mxEvent.disableContextMenu(container);
+            
+            // 创建图形
+            var graph = new mxGraph(container);
+            
+            // 启用编辑
+            graph.setEnabled(true);
+            graph.setCellsResizable(true);
+            graph.setConnectable(true);
+            graph.connectionHandler.setCreateTarget(true);
+            
+            // 启用橡皮筋选择
+            new mxRubberband(graph);
+            
+            // 设置网格可见
+            graph.setGridEnabled(true);
+            graph.gridSize = 20;
+            
+            // 创建坐标系样式
+            var style = graph.getStylesheet().getDefaultVertexStyle();
+            style.shape = 'ellipse';
+            style.perimeter = mxPerimeter.EllipsePerimeter;
+            
+            // 获取用于插入新单元格的默认父级
+            var parent = graph.getDefaultParent();
+            
+            // 绘制坐标系
+            graph.getModel().beginUpdate();
+            try {
+                // 绘制坐标轴
+                var xAxis = graph.insertEdge(parent, null, '', 
+                    graph.insertVertex(parent, null, '', 0, 200, 0, 0, 'shape=point;'), 
+                    graph.insertVertex(parent, null, '', 800, 200, 0, 0, 'shape=point;'), 
+                    'strokeWidth=2;strokeColor=black;'
+                );
+                var yAxis = graph.insertEdge(parent, null, '', 
+                graph.insertVertex(parent, null, '', 400, 400, 0, 0, 'shape=point;'), 
+                    graph.insertVertex(parent, null, '', 400, 0, 0, 0, 'shape=point;'), 
+                    'strokeWidth=2;strokeColor=black;'
+                );
+                
+                // 添加坐标轴标签
+                graph.insertVertex(parent, null, 'X', 780, 220, 30, 20, 'fillColor=none;strokeColor=none;');
+                graph.insertVertex(parent, null, 'Y', 420, 20, 30, 20, 'fillColor=none;strokeColor=none;');
+            } finally {
+                graph.getModel().endUpdate();
+            }
+            
+            // 拖拽功能实现
+            initDragAndDrop(graph, parent);
+            
+            // 初始化输入框功能
+            initInputFunction(graph, parent);
+        }
+        
+        // 初始化拖拽功能
+        function initDragAndDrop(graph, parent) {
+            var functionItems = document.querySelectorAll('.function-item');
+            
+            functionItems.forEach(item => {
+                item.addEventListener('dragstart', function(evt) {
+                    evt.dataTransfer.setData('text/plain', this.dataset.function);
+                });
+                
+                // 设置为可拖拽
+                item.setAttribute('draggable', 'true');
+            });
+            
+            // 图形容器的放置事件
+            var graphContainer = document.getElementById('graphContainer');
+            
+            graphContainer.addEventListener('dragover', function(evt) {
+                evt.preventDefault(); // 允许放置
+            });
+            
+            graphContainer.addEventListener('drop', function(evt) {
+                evt.preventDefault();
+                
+                var functionStr = evt.dataTransfer.getData('text/plain');
+                var rect = graphContainer.getBoundingClientRect();
+                var x = evt.clientX - rect.left;
+                var y = evt.clientY - rect.top;
+                
+                // 绘制函数图像
+                drawFunction(graph, parent, functionStr, x, y);
+            });
+        }
+        
+        // 初始化输入框功能
+        function initInputFunction(graph, parent) {
+            var inputField = document.getElementById('functionInput');
+            var addButton = document.getElementById('addFunction');
+            var pointInput = document.getElementById('pointInput');
+            var addPointButton = document.getElementById('addPoint');
+            
+            // 添加函数按钮事件
+            addButton.addEventListener('click', function() {
+                var functionStr = inputField.value.trim();
+                if (functionStr) {
+                    // 随机位置绘制函数
+                    var x = Math.random() * 400 + 200;
+                    var y = Math.random() * 200 + 100;
+                    drawFunction(graph, parent, functionStr, x, y);
+                    inputField.value = '';
+                }
+            });
+            
+            // 添加点按钮事件
+            addPointButton.addEventListener('click', function() {
+                var pointStr = pointInput.value.trim();
+                if (pointStr) {
+                    try {
+                        // 解析点坐标，格式为 x,y
+                        var coords = pointStr.split(',').map(Number);
+                        if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                            // 坐标系转换（将数学坐标转换为画布坐标）
+                            var canvasX = 400 + coords[0] * 20; // 假设x轴以400为原点，每单位20像素
+                            var canvasY = 200 - coords[1] * 20; // 假设y轴以200为原点，每单位20像素（注意y轴方向相反）
+                            
+                            // 添加红色实心点
+                            graph.getModel().beginUpdate();
+                            try {
+                                graph.insertVertex(parent, null, '', canvasX, canvasY, 10, 10, 'fillColor=red;strokeColor=red;shape=ellipse;');
+                            } finally {
+                                graph.getModel().endUpdate();
+                            }
+                        } else {
+                            alert('请输入有效的坐标格式，例如：1,2');
+                        }
+                    } catch (e) {
+                        alert('输入格式错误：' + e.message);
+                    }
+                    pointInput.value = '';
+                }
+            });
+        }
+        
+        // 绘制函数图像
+        function drawFunction(graph, parent, functionStr, x, y) {
+            // 在图上添加函数标签
+            graph.getModel().beginUpdate();
+            try {
+                // 这里添加函数名称标签
+                graph.insertVertex(parent, null, functionStr, x, y, 120, 30, 'fillColor=white;strokeColor=blue;');
+                
+                // 实际的函数绘图逻辑可以在这里实现
+                // 注意：完整的函数绘图需要更复杂的数学计算和线段绘制
+                // 这里我们简化处理，仅作为示例
+                
+                // 根据函数类型生成不同颜色的示例点
+                var color = getRandomColor();
+                var points = generateFunctionPoints(functionStr);
+                
+                // 绘制函数曲线（简化版）
+                var prevPoint = null;
+                points.forEach(function(point) {
+                    // 坐标系转换
+                    var canvasX = 400 + point.x * 20;
+                    var canvasY = 200 - point.y * 20;
+                    
+                    // 绘制点
+                    var currentPoint = graph.insertVertex(parent, null, '', canvasX, canvasY, 6, 6, 'fillColor=' + color + ';strokeColor=' + color + ';shape=ellipse;');
+                    
+                    // 连接线段
+                    if (prevPoint) {
+                        graph.insertEdge(parent, null, '', prevPoint, currentPoint, 'strokeColor=' + color + ';strokeWidth=1;');
+                    }
+                    prevPoint = currentPoint;
+                });
+            } finally {
+                graph.getModel().endUpdate();
+            }
+        }
+        
+        // 根据函数生成点集（简化版）
+        function generateFunctionPoints(functionStr) {
+            var points = [];
+            
+            // 根据不同函数生成不同的点集
+            for (var x = -10; x <= 10; x += 0.5) {
+                var y = 0;
+                
+                // 根据函数类型计算y值
+                try {
+                    if (functionStr.includes('sin')) {
+                        y = Math.sin(x);
+                    } else if (functionStr.includes('cos')) {
+                        y = Math.cos(x);
+                    } else if (functionStr.includes('tan')) {
+                        y = Math.tan(x);
+                    } else if (functionStr.includes('x^2')) {
+                        y = x * x;
+                    } else if (functionStr.includes('sqrt')) {
+                        y = Math.sqrt(Math.abs(x));
+                    } else {
+                        // 默认线性函数
+                        y = x;
+                    }
+                    
+                    // 限制y值范围，避免溢出
+                    if (Math.abs(y) < 10) {
+                        points.push({x: x, y: y});
+                    }
+                } catch (e) {
+                    // 忽略计算错误
+                }
+            }
+            
+            return points;
+        }
+        
+        // 获取随机颜色
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+    </script>
+</head>
+<body onload="main()">
+    <div class="container">
+        <!-- 左侧工具栏 -->
+        <div class="toolbar">
+            <h3>数学函数库</h3>
+            <div class="function-item" data-function="y = sin(x)">y = sin(x)</div>
+            <div class="function-item" data-function="y = cos(x)">y = cos(x)</div>
+            <div class="function-item" data-function="y = tan(x)">y = tan(x)</div>
+            <div class="function-item" data-function="y = x^2">y = x²</div>
+            <div class="function-item" data-function="y = sqrt(x)">y = √x</div>
+            <div class="function-item" data-function="y = x^3">y = x³</div>
+            <div class="function-item" data-function="y = 1/x">y = 1/x</div>
+            <div class="function-item" data-function="y = e^x">y = eˣ</div>
+            <div class="function-item" data-function="y = ln(x)">y = ln(x)</div>
+            <div class="function-item" data-function="y = |x|">y = |x|</div>
+        </div>
+        
+        <!-- 右侧主区域 -->
+        <div class="main-area">
+            <!-- 输入区域 -->
+            <div class="input-area">
+                <h4>添加自定义函数</h4>
+                <input type="text" id="functionInput" placeholder="输入函数表达式，例如：y = x^2">
+                <button id="addFunction">添加函数</button>
+                
+                <h4 style="margin-top: 10px;">添加数据点</h4>
+                <input type="text" id="pointInput" placeholder="输入点坐标，例如：1,2">
+                <button id="addPoint">添加点</button>
+            </div>
+            
+            <!-- 图形的容器 -->
+            <div class="graph-container">
+                <div id="graphContainer"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

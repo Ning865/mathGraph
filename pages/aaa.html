@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Electron 数学函数图像</title>
+  <style>
+    /* 重置默认样式并设置全屏显示 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    /* 让图像容器居中并全屏显示 */
+    #my-graph {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    /* 确保图像元素全屏 */
+    #my-graph > svg {
+      max-width: 100% !important;
+      max-height: 100% !important;
+    }
+  </style>
+  <!-- 使用 script 标签直接引入 function-plot 库 -->
+  <script src="../node_modules/function-plot/dist/function-plot.js"></script>
+</head>
+
+<body>
+  <!-- 图像容器 -->
+  <div id="my-graph"></div>
+
+  <script>
+    // 等待页面加载完成后绘制正弦波
+    document.addEventListener('DOMContentLoaded', function() {
+      // 监听窗口大小变化，动态调整图像
+      function resizePlot() {
+        // 创建简单的正弦波
+        functionPlot({
+          target: '#my-graph',
+          width: window.innerWidth,  // 设置宽度为窗口宽度
+          height: window.innerHeight, // 设置高度为窗口高度
+          margin: {
+            top: 50,
+            right: 50,
+            bottom: 50,
+            left: 50
+          },
+          data: [{
+            fn: 'sin(x)',
+            color: '#ff0000' // 红色曲线
+          }],
+          grid: true, // 显示网格
+          xAxis: {
+            label: 'X 轴',
+            domain: [-10, 10] // X轴范围
+          },
+          yAxis: {
+            label: 'Y 轴',
+            domain: [-2, 2] // Y轴范围
+          }
+        });
+      }
+      
+      // 初始绘制
+      resizePlot();
+      
+      // 窗口大小变化时重新绘制
+      window.addEventListener('resize', resizePlot);
+    });
+  </script>
+</body>
+
+</html>
