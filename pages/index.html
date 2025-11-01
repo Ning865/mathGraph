@@ -117,21 +117,20 @@
             // 绘制坐标系
             graph.getModel().beginUpdate();
             try {
-                // 绘制坐标轴
-                var xAxis = graph.insertEdge(parent, null, '', 
-                    graph.insertVertex(parent, null, '', 0, 200, 0, 0, 'shape=point;'), 
-                    graph.insertVertex(parent, null, '', 800, 200, 0, 0, 'shape=point;'), 
-                    'strokeWidth=2;strokeColor=black;'
-                );
-                var yAxis = graph.insertEdge(parent, null, '', 
-                graph.insertVertex(parent, null, '', 400, 400, 0, 0, 'shape=point;'), 
-                    graph.insertVertex(parent, null, '', 400, 0, 0, 0, 'shape=point;'), 
-                    'strokeWidth=2;strokeColor=black;'
-                );
+                // // 绘制坐标轴（已注释掉）
+                // var xAxis = graph.insertEdge(parent, null, '', 
+                //     graph.insertVertex(parent, null, '', 0, 200, 0, 0, 'shape=point;'), 
+                //     graph.insertVertex(parent, null, '', 800, 200, 0, 0, 'shape=point;'), 
+                //     'strokeWidth=2;strokeColor=black;'
+                // );
+                // var yAxis = graph.insertEdge(parent, null, '', 
+                // graph.insertVertex(parent, null, '', 400, 400, 0, 0, 'shape=point;'), 
+                //     graph.insertVertex(parent, null, '', 400, 0, 0, 0, 'shape=point;'), 
+                //     'strokeWidth=2;strokeColor=black;'
+                // );
                 
-                // 添加坐标轴标签
-                graph.insertVertex(parent, null, 'X', 780, 220, 30, 20, 'fillColor=none;strokeColor=none;');
-                graph.insertVertex(parent, null, 'Y', 420, 20, 30, 20, 'fillColor=none;strokeColor=none;');
+                // // 添加坐标轴标签（已注释掉）
+                // graph.insertVertex(parent, null, 'X', 780, 220, 30, 20, 'fillColor=none;strokeColor=none;');
             } finally {
                 graph.getModel().endUpdate();
             }
@@ -231,7 +230,7 @@
             graph.getModel().beginUpdate();
             try {
                 // 这里添加函数名称标签
-                graph.insertVertex(parent, null, functionStr, x, y, 120, 30, 'fillColor=white;strokeColor=blue;');
+                graph.insertVertex(parent, null, functionStr, x, y, 250, 150, 'fillColor=white;strokeColor=blue;');
                 
                 // 实际的函数绘图逻辑可以在这里实现
                 // 注意：完整的函数绘图需要更复杂的数学计算和线段绘制
@@ -242,7 +241,7 @@
                 var points = generateFunctionPoints(functionStr);
                 
                 // 绘制函数曲线（简化版）
-                var prevPoint = null;
+               /* var prevPoint = null;
                 points.forEach(function(point) {
                     // 坐标系转换
                     var canvasX = 400 + point.x * 20;
@@ -256,7 +255,7 @@
                         graph.insertEdge(parent, null, '', prevPoint, currentPoint, 'strokeColor=' + color + ';strokeWidth=1;');
                     }
                     prevPoint = currentPoint;
-                });
+                });*/
             } finally {
                 graph.getModel().endUpdate();
             }
@@ -311,6 +310,10 @@
     </script>
 </head>
 <body onload="main()">
+    <div>
+        <a href="aaa.html">生成图像</a>
+        <p>生成代码</p>
+    </div>
     <div class="container">
         <!-- 左侧工具栏 -->
         <div class="toolbar">

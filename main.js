@@ -13,7 +13,7 @@ function createWindow(){
         //preload: path.join(__dirname, 'preload.js')
       }    //窗口总在顶部
     })
-    win.loadFile('pages/aaa.html')
+    win.loadFile('pages/index.html')
     
 }
 
