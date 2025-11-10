@@ -8,10 +8,7 @@ function createWindow(){
         webPreferences: {
         nodeIntegration: true,
         contextIsolation: false// 需要设置为 false
-        //enableRemoteModule: true,
-        //webSecurity: false,
-        //preload: path.join(__dirname, 'preload.js')
-      }    //窗口总在顶部
+      }
     })
     win.loadFile('pages/index.html')
     

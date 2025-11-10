@@ -76,237 +76,345 @@
     <script type="text/javascript" src="../node_modules/mxgraph/javascript/mxClient.js"></script>
     
     <script type="text/javascript">
-        // 创建图形的函数
-        function main() {
-            // 检查浏览器兼容性
-            if (!mxClient.isBrowserSupported()) {
-                mxUtils.error('浏览器不支持！', 200, false);
-                return;
-            }
+        // 定义全局应用程序对象
+        var MathGraphApp = {
+            graph: null,
+            parent: null,
             
-            // 获取图形容器
-            var container = document.getElementById('graphContainer');
-            
-            // 禁用内置的上下文菜单
-            mxEvent.disableContextMenu(container);
-            
-            // 创建图形
-            var graph = new mxGraph(container);
-            
-            // 启用编辑
-            graph.setEnabled(true);
-            graph.setCellsResizable(true);
-            graph.setConnectable(true);
-            graph.connectionHandler.setCreateTarget(true);
-            
-            // 启用橡皮筋选择
-            new mxRubberband(graph);
-            
-            // 设置网格可见
-            graph.setGridEnabled(true);
-            graph.gridSize = 20;
-            
-            // 创建坐标系样式
-            var style = graph.getStylesheet().getDefaultVertexStyle();
-            style.shape = 'ellipse';
-            style.perimeter = mxPerimeter.EllipsePerimeter;
-            
-            // 获取用于插入新单元格的默认父级
-            var parent = graph.getDefaultParent();
-            
-            // 绘制坐标系
-            graph.getModel().beginUpdate();
-            try {
-                // // 绘制坐标轴（已注释掉）
-                // var xAxis = graph.insertEdge(parent, null, '', 
-                //     graph.insertVertex(parent, null, '', 0, 200, 0, 0, 'shape=point;'), 
-                //     graph.insertVertex(parent, null, '', 800, 200, 0, 0, 'shape=point;'), 
-                //     'strokeWidth=2;strokeColor=black;'
-                // );
-                // var yAxis = graph.insertEdge(parent, null, '', 
-                // graph.insertVertex(parent, null, '', 400, 400, 0, 0, 'shape=point;'), 
-                //     graph.insertVertex(parent, null, '', 400, 0, 0, 0, 'shape=point;'), 
-                //     'strokeWidth=2;strokeColor=black;'
-                // );
+            // 初始化应用程序
+            init: function() {
+                // 检查浏览器兼容性
+                if (!mxClient.isBrowserSupported()) {
+                    mxUtils.error('浏览器不支持！', 200, false);
+                    return;
+                }
                 
-                // // 添加坐标轴标签（已注释掉）
-                // graph.insertVertex(parent, null, 'X', 780, 220, 30, 20, 'fillColor=none;strokeColor=none;');
-            } finally {
-                graph.getModel().endUpdate();
-            }
+                // 获取图形容器
+                var container = document.getElementById('graphContainer');
+                
+                // 禁用内置的上下文菜单
+                mxEvent.disableContextMenu(container);
+                
+                // 创建图形
+                this.graph = new mxGraph(container);
+                this.parent = this.graph.getDefaultParent();
+                
+                // 初始化图形设置
+                this.initGraphSettings();
+                
+                // 初始化功能模块
+                this.initDragAndDrop();
+                this.initInputFunction();
+                this.initHighlightFunctions();
+            },
             
-            // 拖拽功能实现
-            initDragAndDrop(graph, parent);
+            // 初始化图形设置
+            initGraphSettings: function() {
+                var graph = this.graph;
+                
+                // 启用编辑功能
+                graph.setEnabled(true);
+                graph.setCellsResizable(true);
+                graph.setConnectable(true);
+                graph.connectionHandler.setCreateTarget(true);
+                
+                // 启用橡皮筋选择
+                new mxRubberband(graph);
+                
+                // 设置网格可见
+                graph.setGridEnabled(true);
+                graph.gridSize = 10;
+                
+                // 创建坐标系样式
+                var style = graph.getStylesheet().getDefaultVertexStyle();
+                style.shape = 'stroke';
+                style.perimeter = mxPerimeter.RectanglePerimeter;
+            },
             
-            // 初始化输入框功能
-            initInputFunction(graph, parent);
-        }
-        
-        // 初始化拖拽功能
-        function initDragAndDrop(graph, parent) {
-            var functionItems = document.querySelectorAll('.function-item');
-            
-            functionItems.forEach(item => {
-                item.addEventListener('dragstart', function(evt) {
-                    evt.dataTransfer.setData('text/plain', this.dataset.function);
+            // 初始化拖拽功能（简化版）
+            initDragAndDrop: function() {
+                var self = this;
+                var functionItems = document.querySelectorAll('.function-item');
+                
+                functionItems.forEach(item => {
+                    item.setAttribute('draggable', 'true');
+                    item.addEventListener('dragstart', function(evt) {
+                        evt.dataTransfer.setData('text/plain', this.dataset.function);
+                    });
                 });
                 
-                // 设置为可拖拽
-                item.setAttribute('draggable', 'true');
-            });
-            
-            // 图形容器的放置事件
-            var graphContainer = document.getElementById('graphContainer');
-            
-            graphContainer.addEventListener('dragover', function(evt) {
-                evt.preventDefault(); // 允许放置
-            });
-            
-            graphContainer.addEventListener('drop', function(evt) {
-                evt.preventDefault();
+                var graphContainer = document.getElementById('graphContainer');
+                graphContainer.addEventListener('dragover', function(evt) {
+                    evt.preventDefault();
+                });
                 
-                var functionStr = evt.dataTransfer.getData('text/plain');
-                var rect = graphContainer.getBoundingClientRect();
-                var x = evt.clientX - rect.left;
-                var y = evt.clientY - rect.top;
-                
-                // 绘制函数图像
-                drawFunction(graph, parent, functionStr, x, y);
-            });
-        }
-        
-        // 初始化输入框功能
-        function initInputFunction(graph, parent) {
-            var inputField = document.getElementById('functionInput');
-            var addButton = document.getElementById('addFunction');
-            var pointInput = document.getElementById('pointInput');
-            var addPointButton = document.getElementById('addPoint');
+                graphContainer.addEventListener('drop', function(evt) {
+                    evt.preventDefault();
+                    var functionStr = evt.dataTransfer.getData('text/plain');
+                    var rect = graphContainer.getBoundingClientRect();
+                    var x = evt.clientX - rect.left;
+                    var y = evt.clientY - rect.top;
+                    self.drawFunction(functionStr, x, y);
+                });
+            },
             
-            // 添加函数按钮事件
-            addButton.addEventListener('click', function() {
-                var functionStr = inputField.value.trim();
-                if (functionStr) {
-                    // 随机位置绘制函数
-                    var x = Math.random() * 400 + 200;
-                    var y = Math.random() * 200 + 100;
-                    drawFunction(graph, parent, functionStr, x, y);
-                    inputField.value = '';
-                }
-            });
-            
-            // 添加点按钮事件
-            addPointButton.addEventListener('click', function() {
-                var pointStr = pointInput.value.trim();
-                if (pointStr) {
-                    try {
-                        // 解析点坐标，格式为 x,y
-                        var coords = pointStr.split(',').map(Number);
-                        if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-                            // 坐标系转换（将数学坐标转换为画布坐标）
-                            var canvasX = 400 + coords[0] * 20; // 假设x轴以400为原点，每单位20像素
-                            var canvasY = 200 - coords[1] * 20; // 假设y轴以200为原点，每单位20像素（注意y轴方向相反）
-                            
-                            // 添加红色实心点
-                            graph.getModel().beginUpdate();
-                            try {
-                                graph.insertVertex(parent, null, '', canvasX, canvasY, 10, 10, 'fillColor=red;strokeColor=red;shape=ellipse;');
-                            } finally {
-                                graph.getModel().endUpdate();
-                            }
-                        } else {
-                            alert('请输入有效的坐标格式，例如：1,2');
-                        }
-                    } catch (e) {
-                        alert('输入格式错误：' + e.message);
-                    }
-                    pointInput.value = '';
-                }
-            });
-        }
-        
-        // 绘制函数图像
-        function drawFunction(graph, parent, functionStr, x, y) {
-            // 在图上添加函数标签
-            graph.getModel().beginUpdate();
-            try {
-                // 这里添加函数名称标签
-                graph.insertVertex(parent, null, functionStr, x, y, 250, 150, 'fillColor=white;strokeColor=blue;');
+            // 初始化输入功能
+            initInputFunction: function() {
+                var self = this;
+                var inputField = document.getElementById('functionInput');
+                var addButton = document.getElementById('addFunction');
+                var pointInput = document.getElementById('pointInput');
+                var addPointButton = document.getElementById('addPoint');
                 
-                // 实际的函数绘图逻辑可以在这里实现
-                // 注意：完整的函数绘图需要更复杂的数学计算和线段绘制
-                // 这里我们简化处理，仅作为示例
-                
-                // 根据函数类型生成不同颜色的示例点
-                var color = getRandomColor();
-                var points = generateFunctionPoints(functionStr);
-                
-                // 绘制函数曲线（简化版）
-               /* var prevPoint = null;
-                points.forEach(function(point) {
-                    // 坐标系转换
-                    var canvasX = 400 + point.x * 20;
-                    var canvasY = 200 - point.y * 20;
-                    
-                    // 绘制点
-                    var currentPoint = graph.insertVertex(parent, null, '', canvasX, canvasY, 6, 6, 'fillColor=' + color + ';strokeColor=' + color + ';shape=ellipse;');
-                    
-                    // 连接线段
-                    if (prevPoint) {
-                        graph.insertEdge(parent, null, '', prevPoint, currentPoint, 'strokeColor=' + color + ';strokeWidth=1;');
-                    }
-                    prevPoint = currentPoint;
-                });*/
-            } finally {
-                graph.getModel().endUpdate();
-            }
-        }
-        
-        // 根据函数生成点集（简化版）
-        function generateFunctionPoints(functionStr) {
-            var points = [];
-            
-            // 根据不同函数生成不同的点集
-            for (var x = -10; x <= 10; x += 0.5) {
-                var y = 0;
-                
-                // 根据函数类型计算y值
-                try {
-                    if (functionStr.includes('sin')) {
-                        y = Math.sin(x);
-                    } else if (functionStr.includes('cos')) {
-                        y = Math.cos(x);
-                    } else if (functionStr.includes('tan')) {
-                        y = Math.tan(x);
-                    } else if (functionStr.includes('x^2')) {
-                        y = x * x;
-                    } else if (functionStr.includes('sqrt')) {
-                        y = Math.sqrt(Math.abs(x));
+                // 添加函数按钮事件
+                addButton.addEventListener('click', function() {
+                    var functionStr = inputField.value.trim();
+                    if (functionStr) {
+                        var x = Math.random() * 400 + 200;
+                        var y = Math.random() * 200 + 100;
+                        self.drawFunction(functionStr, x, y);
+                        inputField.value = '';
                     } else {
-                        // 默认线性函数
-                        y = x;
+                        alert('请输入有效的函数表达式');
                     }
+                });
+                
+                // 添加点按钮事件
+                addPointButton.addEventListener('click', function() {
+                    var pointStr = pointInput.value.trim();
+                    if (pointStr) {
+                        self.addPoint(pointStr);
+                        pointInput.value = '';
+                    }
+                });
+                
+                // 添加回车支持
+                inputField.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        addButton.click();
+                    }
+                });
+                
+                pointInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        addPointButton.click();
+                    }
+                });
+            },
+            
+            // 初始化高亮功能
+            initHighlightFunctions: function() {
+                var self = this;
+                
+                
+                // 用户输入ID高亮
+                document.getElementById('highlightByIdButton').addEventListener('click', function() {
+                    var inputId = document.getElementById('highlightIdInput').value.trim();
+                    if (inputId) {
+                        self.highlightFunctionById(inputId);
+                    } else {
+                        alert('请输入有效的函数ID');
+                    }
+                });
+                
+                // 清除高亮
+                document.getElementById('clearHighlightsButton').addEventListener('click', function() {
+                    self.clearAllHighlights();
+                });
+            },
+            
+            // 绘制函数图像（改进版）
+            drawFunction: function(functionStr, x, y) {
+                var graph = this.graph;
+                var parent = this.parent;
+                
+                // 验证函数表达式
+                if (!this.validateFunction(functionStr)) {
+                    alert('函数表达式无效');
+                    return;
+                }
+                
+                graph.getModel().beginUpdate();
+                try {
+                    // 生成唯一ID
+                    var timestamp = Date.now();
+                    var vertexId =functionStr.replace(/[^a-z0-9]/g, ' ');
                     
-                    // 限制y值范围，避免溢出
-                    if (Math.abs(y) < 10) {
-                        points.push({x: x, y: y});
+                    // 在顶点内容中显示函数表达式和ID
+                    var vertexContent = functionStr + '\n(ID: ' + vertexId + ')';
+                    
+                    graph.insertVertex(parent, vertexId, vertexContent, x, y, 250, 150, 'fillColor=white;strokeColor=blue;');
+                    
+                    
+                    // 生成并绘制函数点集
+                    var color = this.getRandomColor();
+                    var points = this.generateFunctionPoints(functionStr);
+                    
+                    
+                } finally {
+                    graph.getModel().endUpdate();
+                }
+            },
+            
+            // 添加点
+            addPoint: function(pointStr) {
+                var graph = this.graph;
+                var parent = this.parent;
+                
+                try {
+                    // 解析点坐标
+                    var coords = pointStr.split(',').map(Number);
+                    if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                        // 坐标系转换
+                        var canvasX = 400 + coords[0] * 20;
+                        var canvasY = 200 - coords[1] * 20;
+                        
+                        graph.getModel().beginUpdate();
+                        try {
+                            graph.insertVertex(parent, null, '', canvasX, canvasY, 10, 10, 'fillColor=red;strokeColor=red;shape=ellipse;');
+                        } finally {
+                            graph.getModel().endUpdate();
+                        }
+                    } else {
+                        alert('请输入有效的坐标格式，例如：1,2');
                     }
                 } catch (e) {
-                    // 忽略计算错误
+                    alert('输入格式错误：' + e.message);
+                }
+            },
+            
+            // 验证函数表达式
+            validateFunction: function(functionStr) {
+                // 简单验证，确保包含必要的字符
+                return functionStr && typeof functionStr === 'string' && functionStr.length > 0;
+            },
+            
+            // 根据函数生成点集（优化版）
+            generateFunctionPoints: function(functionStr) {
+                var points = [];
+                
+                // 预处理函数表达式
+                functionStr = functionStr.toLowerCase();
+                
+                // 使用更高效的方式检测函数类型
+                var funcType;
+                if (functionStr.includes('sin')) funcType = 'sin';
+                else if (functionStr.includes('cos')) funcType = 'cos';
+                else if (functionStr.includes('tan')) funcType = 'tan';
+                else if (functionStr.includes('x^2')) funcType = 'square';
+                else if (functionStr.includes('sqrt')) funcType = 'sqrt';
+                else funcType = 'linear';
+                
+                // 根据函数类型计算点集
+                for (var x = -10; x <= 10; x += 0.5) {
+                    var y = 0;
+                    
+                    try {
+                        switch(funcType) {
+                            case 'sin': y = Math.sin(x); break;
+                            case 'cos': y = Math.cos(x); break;
+                            case 'tan': 
+                                y = Math.tan(x);
+                                // 处理tan函数的奇异点
+                                if (Math.abs(y) > 100) continue;
+                                break;
+                            case 'square': y = x * x; break;
+                            case 'sqrt': y = Math.sqrt(Math.abs(x)); break;
+                            default: y = x; // 线性函数
+                        }
+                        
+                        // 限制y值范围
+                        if (Math.abs(y) < 10) {
+                            points.push({x: x, y: y});
+                        }
+                    } catch (e) {
+                        // 忽略计算错误
+                    }
+                }
+                
+                return points;
+            },
+            
+            // 获取随机颜色
+            getRandomColor: function() {
+                // 使用更高效的随机颜色生成方式
+                return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            },
+            
+            // 高亮特定ID的函数
+            /*highlightFunctionById: function(functionName) {
+                var graph = this.graph;
+                
+                // 首先清除所有函数的高亮状态
+                this.clearAllHighlights();
+                
+                // 优化查找算法
+                var model = graph.getModel();
+                var cells = model.cells;
+                var targetId = functionName.replace(/[^a-z0-9]/g, ' ');
+                
+                graph.getModel().beginUpdate();
+                try {
+                    // 修改后代码
+                    try {
+                        var foundCount = 0; // 计数器，记录找到的匹配数量
+                        for (var key in cells) {
+                            if (cells.hasOwnProperty(key)) {
+                                var cell = cells[key];
+                                if (cell.id && cell.id.includes(targetId)) {
+                                    // 保存原始样式
+                                    if (!cell.originalStyle) {
+                                        cell.originalStyle = cell.style;
+                                    }
+                                    // 设置高亮样式
+                                    model.setStyle(cell, 'fillColor=yellow;strokeColor=red;strokeWidth=2;');
+                                    foundCount++; // 找到一个就增加计数
+                                }
+                            }
+                        }
+                        // 根据找到的数量显示不同的提示
+                        if (foundCount > 0) {
+                            alert('已成功高亮 ' + foundCount + ' 个包含ID "' + targetId + '" 的元素');
+                        }else alert('未找到ID为 "' + targetId + '" 的函数');
+                    }catch{
+                        alert('发生错误：' + e.message);
+                    } 
+                    finally {
+                        graph.getModel().endUpdate();
+                    }
+                
+                } finally {
+                    graph.getModel().endUpdate();
+                }
+            },*/
+            
+            // 清除所有函数的高亮状态
+            clearAllHighlights: function() {
+                var graph = this.graph;
+                var model = graph.getModel();
+                var cells = model.cells;
+                
+                graph.getModel().beginUpdate();
+                try {
+                    for (var key in cells) {
+                        if (cells.hasOwnProperty(key)) {
+                            var cell = cells[key];
+                            if (cell.originalStyle) {
+                                model.setStyle(cell, cell.originalStyle);
+                                delete cell.originalStyle;
+                            }
+                        }
+                    }
+                } finally {
+                    graph.getModel().endUpdate();
                 }
             }
-            
-            return points;
-        }
+        };
         
-        // 获取随机颜色
-        function getRandomColor() {
-            var letters = '0123456789ABCDEF';
-            var color = '#';
-            for (var i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
-            return color;
-        }
+        // 页面加载完成后初始化应用
+        window.addEventListener('load', function() {
+            MathGraphApp.init();
+        });
     </script>
 </head>
 <body onload="main()">
@@ -318,29 +426,35 @@
         <!-- 左侧工具栏 -->
         <div class="toolbar">
             <h3>数学函数库</h3>
-            <div class="function-item" data-function="y = sin(x)">y = sin(x)</div>
-            <div class="function-item" data-function="y = cos(x)">y = cos(x)</div>
-            <div class="function-item" data-function="y = tan(x)">y = tan(x)</div>
-            <div class="function-item" data-function="y = x^2">y = x²</div>
-            <div class="function-item" data-function="y = sqrt(x)">y = √x</div>
-            <div class="function-item" data-function="y = x^3">y = x³</div>
-            <div class="function-item" data-function="y = 1/x">y = 1/x</div>
-            <div class="function-item" data-function="y = e^x">y = eˣ</div>
-            <div class="function-item" data-function="y = ln(x)">y = ln(x)</div>
-            <div class="function-item" data-function="y = |x|">y = |x|</div>
+            <div class="function-item" data-function="Y = sin(x)">Y = sin(x)</div>
+            <div class="function-item" data-function="Y = cos(x)">Y = cos(x)</div>
+            <div class="function-item" data-function="Y = tan(x)">Y = tan(x)</div>
+            <div class="function-item" data-function="Y = x^2">Y = x²</div>
+            <div class="function-item" data-function="Y = sqrt(x)">Y = √x</div>
+            <div class="function-item" data-function="Y = x^3">Y = x³</div>
+            <div class="function-item" data-function="Y = 1/x">Y = 1/x</div>
+            <div class="function-item" data-function="Y = e^x">Y = eˣ</div>
+            <div class="function-item" data-function="Y = ln(x)">Y = ln(x)</div>
+            <div class="function-item" data-function="Y = |x|">Y = |x|</div>
         </div>
         
         <!-- 右侧主区域 -->
         <div class="main-area">
             <!-- 输入区域 -->
             <div class="input-area">
-                <h4>添加自定义函数</h4>
+                <h4 style="margin-top: 5px;">添加自定义函数</h4>
                 <input type="text" id="functionInput" placeholder="输入函数表达式，例如：y = x^2">
                 <button id="addFunction">添加函数</button>
                 
-                <h4 style="margin-top: 10px;">添加数据点</h4>
+                <h4 style="margin-top: 5px;">添加数据点</h4>
                 <input type="text" id="pointInput" placeholder="输入点坐标，例如：1,2">
                 <button id="addPoint">添加点</button>
+
+                <h4 style="margin-top: 5px;">高亮函数（请输入完整的函数表达式）</h4>
+                <input type="text" id="highlightIdInput" placeholder="输入函数表达式">
+                <button id="highlightByIdButton">高亮指定ID的函数</button>
+                <button id="clearHighlightsButton">清除所有高亮</button>
+                <button id="resetInput">重新输入</button>
             </div>
             
             <!-- 图形的容器 -->
@@ -349,5 +463,15 @@
             </div>
         </div>
     </div>
+    
+    
+    <!-- 外部库引入 -->
+    <script type="text/javascript">
+        mxBasePath = '../node_modules/mxgraph/javascript/src';
+    </script>
+    <script type="text/javascript" src="../node_modules/mxgraph/javascript/mxClient.js"></script>
+    
+    <!-- 应用程序脚本 -->
+
 </body>
 </html>
