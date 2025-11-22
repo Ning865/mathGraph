@@ -3,67 +3,307 @@
 <head>
     <title>数学函数绘图工具</title>
     <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             overflow: hidden;
+            color: #333;
         }
+        
         .container {
             display: flex;
             height: 100vh;
             width: 100vw;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
         }
+        
         .toolbar {
-            width: 200px;
-            background-color: #f0f0f0;
-            border-right: 1px solid #ccc;
-            padding: 10px;
+            width: 250px;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 20px;
             overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
+        
         .toolbar h3 {
             margin-top: 0;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ccc;
-        }
-        .function-item {
-            padding: 8px;
-            margin: 5px 0;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: grab;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--dark-color);
+            font-size: 1.4em;
+            font-weight: 600;
             text-align: center;
         }
+        
+        .function-item {
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            cursor: grab;
+            text-align: center;
+            font-weight: 500;
+            color: var(--dark-color);
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .function-item:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .function-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--primary-color);
+        }
+        
+        .function-item:hover:before {
+            left: 100%;
+        }
+        
         .function-item:active {
             cursor: grabbing;
+            transform: translateY(0);
         }
+        
         .main-area {
             flex: 1;
             display: flex;
             flex-direction: column;
+            background: #ffffff;
         }
+        
         .input-area {
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
-            background-color: #f9f9f9;
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        .input-area input {
+        
+        .input-area h3 {
+            margin: 0 0 15px 0;
+            color: var(--dark-color);
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .input-area h4 {
+            margin: 20px 0 10px 0;
+            color: var(--primary-color);
+            font-size: 1.2em;
+            font-weight: 600;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 10px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        button:hover:before {
+            left: 100%;
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        #identifyRelationshipsButton {
+            background: linear-gradient(145deg, var(--primary-color), #2980b9);
+            color: white;
+        }
+        
+        #deleteSelectedButton {
+            background: linear-gradient(145deg, var(--accent-color), #c0392b);
+            color: white;
+        }
+        
+        .tip-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
             padding: 8px;
-            width: 300px;
-            margin-right: 10px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+            border-left: 3px solid var(--secondary-color);
         }
-        .input-area button {
-            padding: 8px 15px;
-        }
+        
         .graph-container {
             flex: 1;
             position: relative;
             overflow: hidden;
+            background: #f8f9fa;
         }
+        
         #graphContainer {
             width: 100%;
             height: 100%;
+            background: #ffffff;
+        }
+        
+        #functionsResult {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        #functionsResult h4 {
+            margin-top: 0;
+            color: var(--dark-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 8px;
+        }
+        
+        #functionsResult ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        #functionsResult li {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 4px;
+            border-left: 3px solid var(--secondary-color);
+        }
+        
+        #functionsResult button {
+            padding: 4px 8px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
+        }
+        
+        /* 右键菜单样式 */
+        .context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-hover);
+            z-index: 1000;
+            display: none;
+            min-width: 120px;
+        }
+        
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+        }
+        
+        .context-menu-item:hover {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+        }
+        
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .toolbar {
+                width: 100%;
+                height: 200px;
+                border-right: none;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            }
+            
+            .button-group {
+                justify-content: center;
+            }
         }
     </style>
     
@@ -80,6 +320,7 @@
         var MathGraphApp = {
             graph: null,
             parent: null,
+            contextMenu: null,
             
             // 初始化应用程序
             init: function() {
@@ -102,10 +343,12 @@
                 // 初始化图形设置
                 this.initGraphSettings();
                 
+                // 初始化右键菜单
+                this.initContextMenu();
+                
                 // 初始化功能模块
                 this.initDragAndDrop();
-                this.initInputFunction();
-                this.initHighlightFunctions();
+                this.initFunctionRelationships();
             },
             
             // 初始化图形设置
@@ -129,6 +372,66 @@
                 var style = graph.getStylesheet().getDefaultVertexStyle();
                 style.shape = 'stroke';
                 style.perimeter = mxPerimeter.RectanglePerimeter;
+                
+                // 添加右键点击事件
+                this.addRightClickHandler();
+            },
+            
+            // 初始化右键菜单
+            initContextMenu: function() {
+                // 创建右键菜单
+                this.contextMenu = document.createElement('div');
+                this.contextMenu.className = 'context-menu';
+                
+                // 添加删除菜单项
+                var deleteItem = document.createElement('div');
+                deleteItem.className = 'context-menu-item';
+                deleteItem.textContent = '删除';
+                deleteItem.onclick = this.deleteSelectedCells.bind(this);
+                
+                this.contextMenu.appendChild(deleteItem);
+                document.body.appendChild(this.contextMenu);
+                
+                // 点击其他地方隐藏菜单
+                document.addEventListener('click', this.hideContextMenu.bind(this));
+            },
+            
+            // 添加右键点击事件处理
+            addRightClickHandler: function() {
+                var self = this;
+                var container = this.graph.container;
+                
+                // 监听右键点击事件
+                mxEvent.addListener(container, 'contextmenu', function(evt) {
+                    evt.preventDefault();
+                    
+                    // 获取点击位置
+                    var pt = mxUtils.convertPoint(container, mxEvent.getClientX(evt), mxEvent.getClientY(evt));
+                    
+                    // 显示右键菜单
+                    self.showContextMenu(pt.x, pt.y);
+                });
+            },
+            
+            // 显示右键菜单
+            showContextMenu: function(x, y) {
+                this.contextMenu.style.left = x + 'px';
+                this.contextMenu.style.top = y + 'px';
+                this.contextMenu.style.display = 'block';
+            },
+            
+            // 隐藏右键菜单
+            hideContextMenu: function() {
+                this.contextMenu.style.display = 'none';
+            },
+            
+            // 删除选中的单元格
+            deleteSelectedCells: function() {
+                var selectedCells = this.graph.getSelectionCells();
+                if (selectedCells.length > 0) {
+                    this.graph.removeCells(selectedCells);
+                }
+                this.hideContextMenu();
             },
             
             // 初始化拖拽功能（简化版）
@@ -150,7 +453,7 @@
                 
                 graphContainer.addEventListener('drop', function(evt) {
                     evt.preventDefault();
-var functionStr = evt.dataTransfer.getData('text/plain');
+                    var functionStr = evt.dataTransfer.getData('text/plain');
                     var rect = graphContainer.getBoundingClientRect();
                     var x = evt.clientX - rect.left;
                     var y = evt.clientY - rect.top;
@@ -158,127 +461,13 @@ var functionStr = evt.dataTransfer.getData('text/plain');
                 });
             },
             
-            // 初始化输入功能
-            initInputFunction: function() {
-                var self = this;
-                var inputField = document.getElementById('functionInput');
-                var addButton = document.getElementById('addFunction');
-                var pointInput = document.getElementById('pointInput');
-                var addPointButton = document.getElementById('addPoint');
-                
-                // 添加函数按钮事件
-                addButton.addEventListener('click', function() {
-                    var functionStr = inputField.value.trim();
-                    if (functionStr) {
-                        var x = Math.random() * 400 + 200;
-                        var y = Math.random() * 200 + 100;
-                        self.drawFunction(functionStr, x, y);
-                        inputField.value = '';
-                    } else {
-                        alert('请输入有效的函数表达式');
-                    }
-                });
-                
-                // 添加点按钮事件
-                addPointButton.addEventListener('click', function() {
-                    var pointStr = pointInput.value.trim();
-                    if (pointStr) {
-                        self.addPoint(pointStr);
-                        pointInput.value = '';
-                    }
-                });
-                
-                // 添加回车支持
-                inputField.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        addButton.click();
-                    }
-                });
-                
-                pointInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        addPointButton.click();
-                    }
-                });
-            },
-            
-            // 初始化高亮功能
-            initHighlightFunctions: function() {
+            // 初始化函数关系功能
+            initFunctionRelationships: function() {
                 var self = this;
                 
-                
-                // 用户输入ID高亮
-                document.getElementById('highlightByIdButton').addEventListener('click', function() {
-                    var inputId = document.getElementById('highlightIdInput').value.trim();
-                    if (inputId) {
-                        self.highlightFunctionById(inputId);
-                    } else {
-                        alert('请输入有效的函数ID');
-                    }
-                });
-                
-                // 清除高亮
-                document.getElementById('clearHighlightsButton').addEventListener('click', function() {
-                    self.clearAllHighlights();
-                });
-
-
                 // 初始化关系识别按钮事件
                 document.getElementById('identifyRelationshipsButton').addEventListener('click', function() {
                     self.displayFunctionRelationships();
-                });
-
-                // 初始化全部识别按钮事件
-                document.getElementById('identifyAllButton').addEventListener('click', function() {
-                    // 先显示所有函数
-                    var functions = self.identifyFunctions();
-                    var resultDiv = document.getElementById('functionsResult');
-                    
-                    if (functions.length === 0) {
-                        resultDiv.innerHTML = '<p>未识别到任何函数</p>';
-                        return;
-                    }
-                    
-                    // 构建函数列表HTML
-                    var functionsHTML = '<h4>已识别的函数：</h4><ul>';
-                    functions.forEach(function(func, index) {
-                        functionsHTML += '<li>' + 
-                            '<strong>' + func.expression + '</strong> ' +
-                            (func.isCombined ? '<small>(组合函数)</small>' : '<small>(ID: ' + func.id + ')</small>') +
-                            '<button onclick="MathGraphApp.highlightFunctionById(\'' + func.id + '\')" ' +
-                            'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">高亮</button>' +
-                            '</li>';
-                    });
-                    functionsHTML += '</ul>';
-                    
-                    resultDiv.innerHTML = functionsHTML;
-                    
-                    // 然后显示函数关系
-                    self.displayFunctionRelationships();
-                });
-                // 初始化函数识别按钮事件
-                document.getElementById('identifyFunctionsButton').addEventListener('click', function() {
-                    var functions = self.identifyFunctions();
-                    var resultDiv = document.getElementById('functionsResult');
-                    
-                    if (functions.length === 0) {
-                        resultDiv.innerHTML = '<p>未识别到任何函数</p>';
-                        return;
-                    }
-                    
-                    // 构建结果HTML
-                    var resultHTML = '<h4>已识别的函数：</h4><ul>';
-                    functions.forEach(function(func, index) {
-                        resultHTML += '<li>' + 
-                            '<strong>' + func.expression + '</strong> ' +
-                            '<small>(ID: ' + func.id + ')</small>' +
-                            '<button onclick="MathGraphApp.highlightFunctionById(\'' + func.id + '\')" ' +
-                            'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">高亮</button>' +
-                            '</li>';
-                    });
-                    resultHTML += '</ul>';
-                    
-                    resultDiv.innerHTML = resultHTML;
                 });
             },
             
@@ -297,51 +486,18 @@ var functionStr = evt.dataTransfer.getData('text/plain');
                 try {
                     // 生成唯一ID
                     var timestamp = Date.now();
-                    var vertexId =functionStr.replace(/[^a-z0-9]/g, ' ');
+                    var vertexId = functionStr.replace(/[^a-z0-9]/g, ' ');
                     
                     // 在顶点内容中显示函数表达式和ID
                     var vertexContent = functionStr + '\n(ID: ' + vertexId + ')';
                     
                     graph.insertVertex(parent, vertexId, vertexContent, x, y, 250, 150, 'fillColor=white;strokeColor=blue;');
                     
-                    
-                    // 生成并绘制函数点集
-                    var color = this.getRandomColor();
-                    var points = this.generateFunctionPoints(functionStr);
-                    
-                    
                 } finally {
                     graph.getModel().endUpdate();
                 }
             },
             
-            // 添加点
-            addPoint: function(pointStr) {
-                var graph = this.graph;
-                var parent = this.parent;
-                
-                try {
-                    // 解析点坐标
-                    var coords = pointStr.split(',').map(Number);
-                    if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-                        // 坐标系转换
-                        var canvasX = 400 + coords[0] * 20;
-                        var canvasY = 200 - coords[1] * 20;
-                        
-                        graph.getModel().beginUpdate();
-                        try {
-                            graph.insertVertex(parent, null, '', canvasX, canvasY, 10, 10, 'fillColor=red;strokeColor=red;shape=ellipse;');
-                        } finally {
-                            graph.getModel().endUpdate();
-                        }
-                    } else {
-                        alert('请输入有效的坐标格式，例如：1,2');
-                    }
-                } catch (e) {
-                    alert('输入格式错误：' + e.message);
-                }
-            },
-            // 识别并获取画布上所有函数
             // 识别并获取画布上所有函数
             identifyFunctions: function() {
                 var graph = this.graph;
@@ -381,100 +537,13 @@ var functionStr = evt.dataTransfer.getData('text/plain');
                 
                 return functions;
             },
-
-            // 显示识别结果
-            displayIdentifiedFunctions: function() {
-                var functions = this.identifyFunctions();
-                
-                if (functions.length === 0) {
-                    alert('未识别到任何函数');
-                    return;
-                }
-                
-                // 构建结果字符串
-                var result = '已识别的函数：\n';
-                functions.forEach(function(func, index) {
-                    result += (index + 1) + '. ' + func.expression + ' (ID: ' + func.id + ')\n';
-                });
-                
-                // 可以选择显示在弹窗中或页面上的某个区域
-                alert(result);
-                
-                // 或者返回结果用于其他操作
-                return functions;
-},
-
+            
             // 验证函数表达式
             validateFunction: function(functionStr) {
                 // 简单验证，确保包含必要的字符
                 return functionStr && typeof functionStr === 'string' && functionStr.length > 0;
             },
             
-            // 根据函数生成点集（优化版）
-            generateFunctionPoints: function(functionStr) {
-                var points = [];
-                
-                // 预处理函数表达式
-                functionStr = functionStr.toLowerCase();
-                
-                // 使用更高效的方式检测函数类型
-                var funcType;
-                if (functionStr.includes('sin')) funcType = 'sin';
-                else if (functionStr.includes('cos')) funcType = 'cos';
-                else if (functionStr.includes('tan')) funcType = 'tan';
-                else if (functionStr.includes('x^2')) funcType = 'square';
-                else if (functionStr.includes('sqrt')) funcType = 'sqrt';
-                else funcType = 'linear';
-                
-                // 根据函数类型计算点集
-                for (var x = -10; x <= 10; x += 0.5) {
-                    var y = 0;
-                    
-                    try {
-                        switch(funcType) {
-                            case 'sin': y = Math.sin(x); break;
-                            case 'cos': y = Math.cos(x); break;
-                            case 'tan': 
-                                y = Math.tan(x);
-                                // 处理tan函数的奇异点
-                                if (Math.abs(y) > 100) continue;
-                                break;
-                            case 'square': y = x * x; break;
-                            case 'sqrt': y = Math.sqrt(Math.abs(x)); break;
-                            default: y = x; // 线性函数
-                        }
-                        
-                        // 限制y值范围
-                        if (Math.abs(y) < 10) {
-                            points.push({x: x, y: y});
-                        }
-                    } catch (e) {
-                        // 忽略计算错误
-                    }
-                }
-                
-                return points;
-            },
-            
-            // 导出识别的函数为JSON
-            exportFunctionsAsJSON: function() {
-                var functions = this.enhancedFunctionIdentification();
-                var json = JSON.stringify(functions, null, 2);
-                
-                // 创建下载链接
-                var blob = new Blob([json], {type: 'application/json'});
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = 'functions_' + new Date().toISOString().slice(0,10) + '.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                alert('函数已导出为JSON文件');
-            },
-
             // 识别函数之间的关系（连接）
             identifyFunctionRelationships: function() {
                 var graph = this.graph;
@@ -525,7 +594,7 @@ var functionStr = evt.dataTransfer.getData('text/plain');
                 
                 return relationships;
             },
-
+            
             // 生成两个函数相加的组合函数表达式
             generateCombinedFunction: function(func1, func2) {
                 // 提取函数表达式部分（去除y = 部分）
@@ -542,14 +611,14 @@ var functionStr = evt.dataTransfer.getData('text/plain');
                 // 创建组合函数表达式
                 return 'y = ' + expr1 + ' + ' + expr2;
             },
-
+            
             // 显示函数关系和组合函数
             displayFunctionRelationships: function() {
                 var relationships = this.identifyFunctionRelationships();
                 var resultDiv = document.getElementById('functionsResult');
                 
                 if (relationships.length === 0) {
-                    resultDiv.innerHTML += '<p><strong>未检测到函数之间的连接关系</strong></p>';
+                    resultDiv.innerHTML = '<p><strong>未检测到函数之间的连接关系</strong></p>';
                     return;
                 }
                 
@@ -567,158 +636,57 @@ var functionStr = evt.dataTransfer.getData('text/plain');
                 });
                 resultHTML += '</ul>';
                 
-                resultDiv.innerHTML += resultHTML;
+                resultDiv.innerHTML = resultHTML;
                 return relationships;
             },
-
-            // 增强的函数识别方法，包含关系识别
-            identifyFunctionsWithRelationships: function() {
-                var functions = this.identifyFunctions();
-                var relationships = this.identifyFunctionRelationships();
-                
-                return {
-                    individualFunctions: functions,
-                    relationships: relationships,
-                    combinedFunctions: relationships.map(function(rel) {
-                        return rel.combinedFunction;
-                    })
-                };
-            },
             
-
             // 获取随机颜色
             getRandomColor: function() {
                 // 使用更高效的随机颜色生成方式
                 return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
-            },
-            
-            // 高亮特定ID的函数
-            /*highlightFunctionById: function(functionName) {
-                var graph = this.graph;
-                
-                // 首先清除所有函数的高亮状态
-                this.clearAllHighlights();
-                
-                // 优化查找算法
-                var model = graph.getModel();
-                var cells = model.cells;
-                var targetId = functionName.replace(/[^a-z0-9]/g, ' ');
-                
-                graph.getModel().beginUpdate();
-                try {
-                    // 修改后代码
-                    try {
-                        var foundCount = 0; // 计数器，记录找到的匹配数量
-                        for (var key in cells) {
-                            if (cells.hasOwnProperty(key)) {
-                                var cell = cells[key];
-                                if (cell.id && cell.id.includes(targetId)) {
-                                    // 保存原始样式
-                                    if (!cell.originalStyle) {
-                                        cell.originalStyle = cell.style;
-                                    }
-                                    // 设置高亮样式
-                                    model.setStyle(cell, 'fillColor=yellow;strokeColor=red;strokeWidth=2;');
-                                    foundCount++; // 找到一个就增加计数
-                                }
-                            }
-                        }
-                        // 根据找到的数量显示不同的提示
-                        if (foundCount > 0) {
-                            alert('已成功高亮 ' + foundCount + ' 个包含ID "' + targetId + '" 的元素');
-                        }else alert('未找到ID为 "' + targetId + '" 的函数');
-                    }catch{
-                        alert('发生错误：' + e.message);
-                    } 
-                    finally {
-                        graph.getModel().endUpdate();
-                    }
-                
-                } finally {
-                    graph.getModel().endUpdate();
-                }
-            },*/
-            
-            // 清除所有函数的高亮状态
-            clearAllHighlights: function() {
-                var graph = this.graph;
-                var model = graph.getModel();
-                var cells = model.cells;
-                
-                graph.getModel().beginUpdate();
-                try {
-                    for (var key in cells) {
-                        if (cells.hasOwnProperty(key)) {
-                            var cell = cells[key];
-                            if (cell.originalStyle) {
-                                model.setStyle(cell, cell.originalStyle);
-                                delete cell.originalStyle;
-                            }
-                        }
-                    }
-                } finally {
-                    graph.getModel().endUpdate();
-                }
             }
         };
         
-        // 页面加载完成后初始化应用
-        window.addEventListener('load', function() {
+        // 页面加载完成后初始化应用程序
+        window.onload = function() {
             MathGraphApp.init();
-        });
+        };
     </script>
 </head>
-<body onload="main()">
-    <div>
-        <a href="aaa.html">生成图像</a>
-        <p>生成代码</p>
-    </div>
+<body>
     <div class="container">
         <!-- 左侧工具栏 -->
         <div class="toolbar">
-            <h3>数学函数库</h3>
-            <div class="function-item" data-function="Y = sin(x)">Y = sin(x)</div>
-            <div class="function-item" data-function="Y = cos(x)">Y = cos(x)</div>
-            <div class="function-item" data-function="Y = tan(x)">Y = tan(x)</div>
-            <div class="function-item" data-function="Y = x^2">Y = x²</div>
-            <div class="function-item" data-function="Y = sqrt(x)">Y = √x</div>
-            <div class="function-item" data-function="Y = x^3">Y = x³</div>
+            <h3>常用函数</h3>
+            <div class="function-item" data-function="Y = sin(X)">Y = sin(X)</div>
+            <div class="function-item" data-function="Y = cos(X)">Y = cos(X)</div>
+            <div class="function-item" data-function="Y = tan(X)">Y = tan(X)</div>
+            <div class="function-item" data-function="Y = X">Y = X</div>
+            <div class="function-item" data-function="Y = X^2">Y = X²</div>
+            <div class="function-item" data-function="Y = X^3">Y = X³</div>
             <div class="function-item" data-function="Y = 1/x">Y = 1/x</div>
             <div class="function-item" data-function="Y = e^x">Y = eˣ</div>
             <div class="function-item" data-function="Y = ln(x)">Y = ln(x)</div>
             <div class="function-item" data-function="Y = |x|">Y = |x|</div>
         </div>
         
-        <div class="toolbar">
-            <h3>数学工具库</h3>
-            <div class="function-item" data-function="+">+</div>
-            <div class="function-item" data-function="-">-</div>
-            <div class="function-item" data-function="*">*</div>
-            <div class="function-item" data-function="/">/</div>
-        </div>
         <!-- 右侧主区域 -->
         <div class="main-area">
             <!-- 输入区域 -->
             <div class="input-area">
-                <h4 style="margin-top: 5px;">添加自定义函数</h4>
-                <input type="text" id="functionInput" placeholder="输入函数表达式，例如：y = x^2">
-                <button id="addFunction">添加函数</button>
+                <h3>数学函数绘图工具</h3>
                 
-                <h4 style="margin-top: 5px;">添加数据点</h4>
-                <input type="text" id="pointInput" placeholder="输入点坐标，例如：1,2">
-                <button id="addPoint">添加点</button>
-
-                <h4 style="margin-top: 5px;">函数关系识别</h4>
-                <button id="identifyRelationshipsButton">识别函数之间的关系</button>
-                <button id="identifyAllButton">识别所有函数和关系</button>
-                <div id="functionsResult" style="margin-top: 10px; max-height: 150px; overflow-y: auto;"></div>
-
+                <!-- 函数操作区域 -->
+                <h4>函数操作</h4>
+                <div class="button-group">
+                    <button id="deleteSelectedButton" onclick="MathGraphApp.deleteSelectedCells()">🗑️ 删除选中函数</button>
+                    <button id="identifyRelationshipsButton">🔗 识别函数关系</button>
+                </div>
                 
-                <h4 style="margin-top: 5px;">高亮函数（请输入完整的函数表达式）</h4>
-                <input type="text" id="highlightIdInput" placeholder="输入函数表达式">
-                <button id="highlightByIdButton">高亮指定ID的函数</button>
-                <button id="clearHighlightsButton">清除所有高亮</button>
-                <button id="resetInput">重新输入</button>
+                <!-- <p class="tip-text">提示：右键点击图形元素可快速删除，拖拽函数到画布进行绘制</p> -->
+                
+                <!-- 结果显示区域 -->
+                <div id="functionsResult"></div>
             </div>
             
             <!-- 图形的容器 -->
@@ -727,15 +695,5 @@ var functionStr = evt.dataTransfer.getData('text/plain');
             </div>
         </div>
     </div>
-    
-    
-    <!-- 外部库引入 -->
-    <script type="text/javascript">
-        mxBasePath = '../node_modules/mxgraph/javascript/src';
-    </script>
-    <script type="text/javascript" src="../node_modules/mxgraph/javascript/mxClient.js"></script>
-    
-    <!-- 应用程序脚本 -->
-
 </body>
 </html>
