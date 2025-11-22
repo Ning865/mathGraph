@@ -150,7 +150,7 @@
                 
                 graphContainer.addEventListener('drop', function(evt) {
                     evt.preventDefault();
-                    var functionStr = evt.dataTransfer.getData('text/plain');
+var functionStr = evt.dataTransfer.getData('text/plain');
                     var rect = graphContainer.getBoundingClientRect();
                     var x = evt.clientX - rect.left;
                     var y = evt.clientY - rect.top;
@@ -221,6 +221,65 @@
                 document.getElementById('clearHighlightsButton').addEventListener('click', function() {
                     self.clearAllHighlights();
                 });
+
+
+                // 初始化关系识别按钮事件
+                document.getElementById('identifyRelationshipsButton').addEventListener('click', function() {
+                    self.displayFunctionRelationships();
+                });
+
+                // 初始化全部识别按钮事件
+                document.getElementById('identifyAllButton').addEventListener('click', function() {
+                    // 先显示所有函数
+                    var functions = self.identifyFunctions();
+                    var resultDiv = document.getElementById('functionsResult');
+                    
+                    if (functions.length === 0) {
+                        resultDiv.innerHTML = '<p>未识别到任何函数</p>';
+                        return;
+                    }
+                    
+                    // 构建函数列表HTML
+                    var functionsHTML = '<h4>已识别的函数：</h4><ul>';
+                    functions.forEach(function(func, index) {
+                        functionsHTML += '<li>' + 
+                            '<strong>' + func.expression + '</strong> ' +
+                            (func.isCombined ? '<small>(组合函数)</small>' : '<small>(ID: ' + func.id + ')</small>') +
+                            '<button onclick="MathGraphApp.highlightFunctionById(\'' + func.id + '\')" ' +
+                            'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">高亮</button>' +
+                            '</li>';
+                    });
+                    functionsHTML += '</ul>';
+                    
+                    resultDiv.innerHTML = functionsHTML;
+                    
+                    // 然后显示函数关系
+                    self.displayFunctionRelationships();
+                });
+                // 初始化函数识别按钮事件
+                document.getElementById('identifyFunctionsButton').addEventListener('click', function() {
+                    var functions = self.identifyFunctions();
+                    var resultDiv = document.getElementById('functionsResult');
+                    
+                    if (functions.length === 0) {
+                        resultDiv.innerHTML = '<p>未识别到任何函数</p>';
+                        return;
+                    }
+                    
+                    // 构建结果HTML
+                    var resultHTML = '<h4>已识别的函数：</h4><ul>';
+                    functions.forEach(function(func, index) {
+                        resultHTML += '<li>' + 
+                            '<strong>' + func.expression + '</strong> ' +
+                            '<small>(ID: ' + func.id + ')</small>' +
+                            '<button onclick="MathGraphApp.highlightFunctionById(\'' + func.id + '\')" ' +
+                            'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">高亮</button>' +
+                            '</li>';
+                    });
+                    resultHTML += '</ul>';
+                    
+                    resultDiv.innerHTML = resultHTML;
+                });
             },
             
             // 绘制函数图像（改进版）
@@ -282,7 +341,69 @@
                     alert('输入格式错误：' + e.message);
                 }
             },
-            
+            // 识别并获取画布上所有函数
+            // 识别并获取画布上所有函数
+            identifyFunctions: function() {
+                var graph = this.graph;
+                var model = graph.getModel();
+                var cells = model.cells;
+                var functions = [];
+                
+                // 遍历所有单元格
+                for (var key in cells) {
+                    if (cells.hasOwnProperty(key)) {
+                        var cell = cells[key];
+                        
+                        // 检查是否为函数顶点（包含函数表达式）
+                        if (cell.value && typeof cell.value === 'string') {
+                            // 提取函数表达式（去除ID部分）
+                            var content = cell.value.toString();
+                            var functionStr = content.split('\n')[0].trim();
+                            
+                            // 检查是否是有效的函数表达式
+                            if (functionStr && (functionStr.includes('=') || 
+                                functionStr.includes('sin') || 
+                                functionStr.includes('cos') || 
+                                functionStr.includes('tan') ||
+                                functionStr.includes('x^'))) {
+                                
+                                functions.push({
+                                    id: cell.id,
+                                    expression: functionStr,
+                                    x: cell.geometry ? cell.geometry.x : 0,
+                                    y: cell.geometry ? cell.geometry.y : 0,
+                                    isCombined: functionStr.includes('+') // 标记是否为组合函数
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                return functions;
+            },
+
+            // 显示识别结果
+            displayIdentifiedFunctions: function() {
+                var functions = this.identifyFunctions();
+                
+                if (functions.length === 0) {
+                    alert('未识别到任何函数');
+                    return;
+                }
+                
+                // 构建结果字符串
+                var result = '已识别的函数：\n';
+                functions.forEach(function(func, index) {
+                    result += (index + 1) + '. ' + func.expression + ' (ID: ' + func.id + ')\n';
+                });
+                
+                // 可以选择显示在弹窗中或页面上的某个区域
+                alert(result);
+                
+                // 或者返回结果用于其他操作
+                return functions;
+},
+
             // 验证函数表达式
             validateFunction: function(functionStr) {
                 // 简单验证，确保包含必要的字符
@@ -335,6 +456,136 @@
                 return points;
             },
             
+            // 导出识别的函数为JSON
+            exportFunctionsAsJSON: function() {
+                var functions = this.enhancedFunctionIdentification();
+                var json = JSON.stringify(functions, null, 2);
+                
+                // 创建下载链接
+                var blob = new Blob([json], {type: 'application/json'});
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'functions_' + new Date().toISOString().slice(0,10) + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('函数已导出为JSON文件');
+            },
+
+            // 识别函数之间的关系（连接）
+            identifyFunctionRelationships: function() {
+                var graph = this.graph;
+                var model = graph.getModel();
+                var cells = model.cells;
+                var relationships = [];
+                
+                // 收集所有函数顶点
+                var functionVertices = {};
+                for (var key in cells) {
+                    if (cells.hasOwnProperty(key) && cells[key].value && typeof cells[key].value === 'string') {
+                        var content = cells[key].value.toString();
+                        var functionStr = content.split('\n')[0].trim();
+                        if (functionStr && (functionStr.includes('=') || 
+                            functionStr.includes('sin') || 
+                            functionStr.includes('cos') || 
+                            functionStr.includes('tan') ||
+                            functionStr.includes('x^'))) {
+                            functionVertices[key] = functionStr;
+                        }
+                    }
+                }
+                
+                // 检测边（连接）
+                for (var key in cells) {
+                    if (cells.hasOwnProperty(key)) {
+                        var cell = cells[key];
+                        // 检查是否为边（箭头连接）
+                        if (cell.source && cell.target && functionVertices[cell.source.id] && functionVertices[cell.target.id]) {
+                            // 提取源函数和目标函数
+                            var sourceFunc = functionVertices[cell.source.id];
+                            var targetFunc = functionVertices[cell.target.id];
+                            
+                            // 创建相加关系
+                            var combinedFunc = this.generateCombinedFunction(sourceFunc, targetFunc);
+                            
+                            relationships.push({
+                                sourceId: cell.source.id,
+                                sourceFunc: sourceFunc,
+                                targetId: cell.target.id,
+                                targetFunc: targetFunc,
+                                relationshipType: '相加',
+                                combinedFunction: combinedFunc
+                            });
+                        }
+                    }
+                }
+                
+                return relationships;
+            },
+
+            // 生成两个函数相加的组合函数表达式
+            generateCombinedFunction: function(func1, func2) {
+                // 提取函数表达式部分（去除y = 部分）
+                var extractExpression = function(func) {
+                    if (func.includes('=')) {
+                        return func.split('=')[1].trim();
+                    }
+                    return func;
+                };
+                
+                var expr1 = extractExpression(func1);
+                var expr2 = extractExpression(func2);
+                
+                // 创建组合函数表达式
+                return 'y = ' + expr1 + ' + ' + expr2;
+            },
+
+            // 显示函数关系和组合函数
+            displayFunctionRelationships: function() {
+                var relationships = this.identifyFunctionRelationships();
+                var resultDiv = document.getElementById('functionsResult');
+                
+                if (relationships.length === 0) {
+                    resultDiv.innerHTML += '<p><strong>未检测到函数之间的连接关系</strong></p>';
+                    return;
+                }
+                
+                // 构建结果HTML
+                var resultHTML = '<h4>函数关系（箭头连接表示相加）：</h4><ul>';
+                relationships.forEach(function(rel, index) {
+                    resultHTML += '<li>' + 
+                        '<strong>关系 ' + (index + 1) + '</strong>: ' +
+                        rel.sourceFunc + ' → ' + rel.targetFunc + '<br>' +
+                        '<em>组合函数:</em> <strong>' + rel.combinedFunction + '</strong>' +
+                        '<button onclick="MathGraphApp.drawFunction(\'' + 
+                        rel.combinedFunction + '\', 200, ' + (100 + index * 50) + ')" ' +
+                        'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">绘制</button>' +
+                        '</li>';
+                });
+                resultHTML += '</ul>';
+                
+                resultDiv.innerHTML += resultHTML;
+                return relationships;
+            },
+
+            // 增强的函数识别方法，包含关系识别
+            identifyFunctionsWithRelationships: function() {
+                var functions = this.identifyFunctions();
+                var relationships = this.identifyFunctionRelationships();
+                
+                return {
+                    individualFunctions: functions,
+                    relationships: relationships,
+                    combinedFunctions: relationships.map(function(rel) {
+                        return rel.combinedFunction;
+                    })
+                };
+            },
+            
+
             // 获取随机颜色
             getRandomColor: function() {
                 // 使用更高效的随机颜色生成方式
@@ -450,6 +701,12 @@
                 <input type="text" id="pointInput" placeholder="输入点坐标，例如：1,2">
                 <button id="addPoint">添加点</button>
 
+                <h4 style="margin-top: 5px;">函数关系识别</h4>
+                <button id="identifyRelationshipsButton">识别函数之间的关系</button>
+                <button id="identifyAllButton">识别所有函数和关系</button>
+                <div id="functionsResult" style="margin-top: 10px; max-height: 150px; overflow-y: auto;"></div>
+
+                
                 <h4 style="margin-top: 5px;">高亮函数（请输入完整的函数表达式）</h4>
                 <input type="text" id="highlightIdInput" placeholder="输入函数表达式">
                 <button id="highlightByIdButton">高亮指定ID的函数</button>
