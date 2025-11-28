@@ -1,0 +1,27 @@
+/* 重置默认样式并设置全屏显示 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 让图像容器居中并全屏显示 */
+#my-graph {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 确保图像元素全屏 */
+#my-graph > svg {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
