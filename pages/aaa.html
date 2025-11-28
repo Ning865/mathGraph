@@ -32,57 +32,106 @@
       max-width: 100% !important;
       max-height: 100% !important;
     }
+    
+    /* 添加调试信息样式 */
+    #debug-info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      font-size: 12px;
+      z-index: 1000;
+    }
   </style>
-  <!-- 使用 script 标签直接引入 function-plot 库 -->
-  <script src="../node_modules/function-plot/dist/function-plot.js"></script>
+  <!-- 使用CDN引入function-plot库，确保库能正确加载 -->
+  <script src="https://cdn.jsdelivr.net/npm/function-plot@1.23.2/dist/function-plot.js"></script>
 </head>
 
 <body>
   <div>
     <a href="index.html">返回</a>
   </div>
+  <!-- 调试信息面板 -->
+  <div id="debug-info">正在处理函数...</div>
   <!-- 图像容器 -->
   <div id="my-graph"></div>
 
-  <script>
-    // 等待页面加载完成后绘制正弦波
+<script>
+    // 等待页面加载完成后绘制函数图像
     document.addEventListener('DOMContentLoaded', function() {
-      // 监听窗口大小变化，动态调整图像
-      function resizePlot() {
-        // 创建简单的正弦波
-        functionPlot({
-          target: '#my-graph',
-          width: window.innerWidth,  // 设置宽度为窗口宽度
-          height: window.innerHeight, // 设置高度为窗口高度
-          margin: {
-            top: 50,
-            right: 50,
-            bottom: 50,
-            left: 50
-          },
-          data: [{
-            fn: 'sin(x)+cos(x)',
-            color: '#ff0000' // 红色曲线
-          }],
-          grid: true, // 显示网格
-          xAxis: {
-            label: 'X 轴',
-            domain: [-10, 10] // X轴范围
-          },
-          yAxis: {
-            label: 'Y 轴',
-            domain: [-2, 2] // Y轴范围
-          }
-        });
-      }
-      
-      // 初始绘制
-      resizePlot();
-      
-      // 窗口大小变化时重新绘制
-      window.addEventListener('resize', resizePlot);
+        // 从URL获取函数表达式参数
+        function getFunctionFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const functionParam = urlParams.get('function');
+            console.log('从URL获取的函数:', functionParam);
+            return functionParam || 'sin(x)+cos(x)'; // 默认函数
+        }
+        
+        // 规范化函数表达式
+        function normalizeExpression(expr) {
+            // 移除可能导致解析错误的空白字符
+            expr = expr.trim();
+            // 将常见的数学表达式格式转换为function-plot可识别的格式
+            expr = expr.replace(/\s+/g, ''); // 移除所有空白
+            expr = expr.replace(/([0-9a-zA-Z)])x/g, '$1*x'); // 添加乘法符号，如2x→2*x
+            console.log('规范化后的函数:', expr);
+            return expr;
+        }
+        
+        // 更新调试信息
+        function updateDebugInfo(message) {
+            document.getElementById('debug-info').textContent = message;
+        }
+        
+        // 监听窗口大小变化，动态调整图像
+        function resizePlot() {
+            try {
+                // 获取要绘制的函数
+                const rawFunction = getFunctionFromUrl();
+                const normalizedFunction = normalizeExpression(rawFunction);
+                updateDebugInfo(`正在绘制: ${normalizedFunction}`);
+                
+                // 创建函数图像
+                functionPlot({
+                    target: '#my-graph',
+                    width: window.innerWidth - 100,  // 调整宽度留出边距
+                    height: window.innerHeight - 100, // 调整高度留出边距
+                    margin: {
+                        top: 50,
+                        right: 50,
+                        bottom: 50,
+                        left: 50
+                    },
+                    data: [{
+                        fn: normalizedFunction,
+                        color: '#ff0000' // 红色曲线
+                    }],
+                    grid: true, // 显示网格
+                    xAxis: {
+                        label: 'X 轴',
+                        domain: [-10, 10] // X轴范围
+                    },
+                    yAxis: {
+                        label: 'Y 轴',
+                        domain: [-5, 5] // 扩大Y轴范围，适应更多函数
+                    }
+                });
+                updateDebugInfo(`已成功绘制: ${normalizedFunction}`);
+            } catch (error) {
+                console.error('绘制错误:', error);
+                updateDebugInfo(`绘制失败: ${error.message}`);
+            }
+        }
+        
+        // 初始绘制
+        resizePlot();
+        
+        // 窗口大小变化时重新绘制
+        window.addEventListener('resize', resizePlot);
     });
-  </script>
+</script>
 </body>
 
 </html>

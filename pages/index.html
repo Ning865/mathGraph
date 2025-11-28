@@ -490,8 +490,10 @@
                     
                     // 在顶点内容中显示函数表达式和ID
                     var vertexContent = functionStr + '\n(ID: ' + vertexId + ')';
-                    
-                    graph.insertVertex(parent, vertexId, vertexContent, x, y, 250, 150, 'fillColor=white;strokeColor=blue;');
+                    if(functionStr.includes('=')){
+                        graph.insertVertex(parent, vertexId, vertexContent, x, y, 150, 100, 'fillColor=white;strokeColor=blue;');
+                    }
+                    else graph.insertVertex(parent, vertexId, vertexContent, x, y, 100, 50, 'fillColor=white;strokeColor=blue;strokeWidth=2;shape=ellipse;');
                     
                 } finally {
                     graph.getModel().endUpdate();
@@ -546,171 +548,171 @@
             
             // 识别函数之间的关系（支持链式合并）
             // 识别函数之间的关系（支持带运算符的链式合并）
-identifyFunctionRelationships: function() {
-    var graph = this.graph;
-    var model = graph.getModel();
-    var cells = model.cells;
-    var relationships = [];
-    
-    // 收集所有函数顶点（包括运算符）
-    var functionVertices = {};
-    for (var key in cells) {
-        if (cells.hasOwnProperty(key) && cells[key].value && typeof cells[key].value === 'string') {
-            var content = cells[key].value.toString();
-            var functionStr = content.split('\n')[0].trim();
-            // 增加对运算符的识别
-            if (functionStr && (functionStr.includes('=') || 
-                functionStr.includes('sin') || 
-                functionStr.includes('cos') || 
-                functionStr.includes('tan') ||
-                functionStr.includes('x^') ||
-                ['+', '-', '*', '/'].includes(functionStr))) {
-                functionVertices[key] = functionStr;
-            }
-        }
-    }
-    
-    // 构建边的映射关系
-    var edges = [];
-    for (var key in cells) {
-        if (cells.hasOwnProperty(key)) {
-            var cell = cells[key];
-            if (cell.source && cell.target && 
-                functionVertices[cell.source.id] && 
-                functionVertices[cell.target.id]) {
-                edges.push({
-                    sourceId: cell.source.id,
-                    targetId: cell.target.id,
-                    sourceFunc: functionVertices[cell.source.id],
-                    targetFunc: functionVertices[cell.target.id]
-                });
-            }
-        }
-    }
-    
-    // 识别链式关系
-    var chains = this.identifyFunctionChains(edges, functionVertices);
-    
-    // 辅助函数：构建带运算符的表达式
-    function buildExpressionWithOperators(chain, functionVertices) {
-        var exprParts = [];
-        var currentExpr = null;
-        var currentOperator = null;
-        
-        // 处理链中的每个元素
-        for (var i = 0; i < chain.length; i++) {
-            var func = functionVertices[chain[i]];
-            var isOperator = ['+', '-', '*', '/'].includes(func);
-            
-            if (!isOperator && currentOperator === null) {
-                // 第一个函数表达式
-                currentExpr = func.includes('=') ? func.split('=')[1].trim() : func;
-            } else if (isOperator) {
-                // 运算符
-                currentOperator = func;
-            } else if (currentExpr !== null && currentOperator !== null) {
-                // 第二个函数表达式，进行运算
-                var nextExpr = func.includes('=') ? func.split('=')[1].trim() : func;
+            identifyFunctionRelationships: function() {
+                var graph = this.graph;
+                var model = graph.getModel();
+                var cells = model.cells;
+                var relationships = [];
                 
-                // 根据运算符类型构建表达式部分
-                exprParts.push(currentExpr);
-                exprParts.push(currentOperator);
-                
-                // 重置，准备下一组运算
-                currentExpr = nextExpr;
-                currentOperator = null;
-            }
-        }
-        
-        // 添加最后一个表达式（如果有）
-        if (currentExpr !== null) {
-            exprParts.push(currentExpr);
-        }
-        
-        // 如果有有效的表达式部分，返回完整表达式
-        if (exprParts.length > 0) {
-            return 'y = ' + exprParts.join(' ');
-        }
-        
-        return null;
-    }
-    
-    // 为每个链创建组合函数关系
-    chains.forEach(function(chain) {
-        if (chain.length >= 3) {  // 至少需要：函数-运算符-函数
-            // 检查并构建表达式
-            var combinedExpr = buildExpressionWithOperators(chain, functionVertices);
-            if (combinedExpr) {
-                // 添加到关系数组
-                relationships.push({
-                    sourceIds: chain.filter(id => !['+', '-', '*', '/'].includes(functionVertices[id])),
-                    operators: chain.filter(id => ['+', '-', '*', '/'].includes(functionVertices[id])),
-                    targetId: chain[chain.length - 1],
-                    chainFunctions: chain.map(function(id) { return functionVertices[id]; }),
-                    relationshipType: '带运算符的链式关系',
-                    combinedFunction: combinedExpr
-                });
-            }
-        } else if (chain.length === 2) {  // 兼容原来的简单相加关系
-            // 检查是否包含运算符
-            var hasOperator = ['+', '-', '*', '/'].includes(functionVertices[chain[0]]) || 
-                              ['+', '-', '*', '/'].includes(functionVertices[chain[1]]);
-            
-            if (hasOperator) {
-                // 如果包含运算符，尝试简单构建表达式
-                var expr1 = functionVertices[chain[0]].includes('=') 
-                    ? functionVertices[chain[0]].split('=')[1].trim() 
-                    : functionVertices[chain[0]];
-                var expr2 = functionVertices[chain[1]].includes('=') 
-                    ? functionVertices[chain[1]].split('=')[1].trim() 
-                    : functionVertices[chain[1]];
-                
-                // 确定哪个是运算符，哪个是表达式
-                var operator = null;
-                var expression = null;
-                
-                if (['+', '-', '*', '/'].includes(expr1)) {
-                    operator = expr1;
-                    expression = expr2;
-                } else if (['+', '-', '*', '/'].includes(expr2)) {
-                    operator = expr2;
-                    expression = expr1;
+                // 收集所有函数顶点（包括运算符）
+                var functionVertices = {};
+                for (var key in cells) {
+                    if (cells.hasOwnProperty(key) && cells[key].value && typeof cells[key].value === 'string') {
+                        var content = cells[key].value.toString();
+                        var functionStr = content.split('\n')[0].trim();
+                        // 增加对运算符的识别
+                        if (functionStr && (functionStr.includes('=') || 
+                            functionStr.includes('sin') || 
+                            functionStr.includes('cos') || 
+                            functionStr.includes('tan') ||
+                            functionStr.includes('x^') ||
+                            ['+', '-', '*', '/'].includes(functionStr))) {
+                            functionVertices[key] = functionStr;
+                        }
+                    }
                 }
                 
-                if (operator && expression) {
-                    var combinedExpr = 'y = ' + expression + ' ' + operator;  // 注意：这种情况下可能需要进一步处理
-                    relationships.push({
-                        sourceIds: [chain[0]],
-                        targetId: chain[1],
-                        chainFunctions: chain.map(function(id) { return functionVertices[id]; }),
-                        relationshipType: '带运算符的简单关系',
-                        combinedFunction: combinedExpr
-                    });
+                // 构建边的映射关系
+                var edges = [];
+                for (var key in cells) {
+                    if (cells.hasOwnProperty(key)) {
+                        var cell = cells[key];
+                        if (cell.source && cell.target && 
+                            functionVertices[cell.source.id] && 
+                            functionVertices[cell.target.id]) {
+                            edges.push({
+                                sourceId: cell.source.id,
+                                targetId: cell.target.id,
+                                sourceFunc: functionVertices[cell.source.id],
+                                targetFunc: functionVertices[cell.target.id]
+                            });
+                        }
+                    }
                 }
-            } else {
-                // 原来的简单相加逻辑
-                var sourceExpr = functionVertices[chain[0]].includes('=') 
-                    ? functionVertices[chain[0]].split('=')[1].trim() 
-                    : functionVertices[chain[0]];
-                var targetExpr = functionVertices[chain[1]].includes('=') 
-                    ? functionVertices[chain[1]].split('=')[1].trim() 
-                    : functionVertices[chain[1]];
                 
-                var combinedExpr = 'y = ' + sourceExpr + ' + ' + targetExpr;
+                // 识别链式关系
+                var chains = this.identifyFunctionChains(edges, functionVertices);
                 
-                relationships.push({
-                    sourceIds: [chain[0]],
-                    targetId: chain[1],
-                    chainFunctions: chain.map(function(id) { return functionVertices[id]; }),
-                    relationshipType: '简单相加',
-                    combinedFunction: combinedExpr
+                // 辅助函数：构建带运算符的表达式
+                function buildExpressionWithOperators(chain, functionVertices) {
+                    var exprParts = [];
+                    var currentExpr = null;
+                    var currentOperator = null;
+                    
+                    // 处理链中的每个元素
+                    for (var i = 0; i < chain.length; i++) {
+                        var func = functionVertices[chain[i]];
+                        var isOperator = ['+', '-', '*', '/'].includes(func);
+                        
+                        if (!isOperator && currentOperator === null) {
+                            // 第一个函数表达式
+                            currentExpr = func.includes('=') ? func.split('=')[1].trim() : func;
+                        } else if (isOperator) {
+                            // 运算符
+                            currentOperator = func;
+                        } else if (currentExpr !== null && currentOperator !== null) {
+                            // 第二个函数表达式，进行运算
+                            var nextExpr = func.includes('=') ? func.split('=')[1].trim() : func;
+                            
+                            // 根据运算符类型构建表达式部分
+                            exprParts.push(currentExpr);
+                            exprParts.push(currentOperator);
+                            
+                            // 重置，准备下一组运算
+                            currentExpr = nextExpr;
+                            currentOperator = null;
+                        }
+                    }
+                    
+                    // 添加最后一个表达式（如果有）
+                    if (currentExpr !== null) {
+                        exprParts.push(currentExpr);
+                    }
+                    
+                    // 如果有有效的表达式部分，返回完整表达式
+                    if (exprParts.length > 0) {
+                        return 'y = ' + exprParts.join(' ');
+                    }
+                    
+                    return null;
+                }
+                
+                // 为每个链创建组合函数关系
+                chains.forEach(function(chain) {
+                    if (chain.length >= 3) {  // 至少需要：函数-运算符-函数
+                        // 检查并构建表达式
+                        var combinedExpr = buildExpressionWithOperators(chain, functionVertices);
+                        if (combinedExpr) {
+                            // 添加到关系数组
+                            relationships.push({
+                                sourceIds: chain.filter(id => !['+', '-', '*', '/'].includes(functionVertices[id])),
+                                operators: chain.filter(id => ['+', '-', '*', '/'].includes(functionVertices[id])),
+                                targetId: chain[chain.length - 1],
+                                chainFunctions: chain.map(function(id) { return functionVertices[id]; }),
+                                relationshipType: '带运算符的链式关系',
+                                combinedFunction: combinedExpr
+                            });
+                        }
+                    } else if (chain.length === 2) {  // 兼容原来的简单相加关系
+                        // 检查是否包含运算符
+                        var hasOperator = ['+', '-', '*', '/'].includes(functionVertices[chain[0]]) || 
+                                        ['+', '-', '*', '/'].includes(functionVertices[chain[1]]);
+                        
+                        if (hasOperator) {
+                            // 如果包含运算符，尝试简单构建表达式
+                            var expr1 = functionVertices[chain[0]].includes('=') 
+                                ? functionVertices[chain[0]].split('=')[1].trim() 
+                                : functionVertices[chain[0]];
+                            var expr2 = functionVertices[chain[1]].includes('=') 
+                                ? functionVertices[chain[1]].split('=')[1].trim() 
+                                : functionVertices[chain[1]];
+                            
+                            // 确定哪个是运算符，哪个是表达式
+                            var operator = null;
+                            var expression = null;
+                            
+                            if (['+', '-', '*', '/'].includes(expr1)) {
+                                operator = expr1;
+                                expression = expr2;
+                            } else if (['+', '-', '*', '/'].includes(expr2)) {
+                                operator = expr2;
+                                expression = expr1;
+                            }
+                            
+                            if (operator && expression) {
+                                var combinedExpr = 'y = ' + expression + ' ' + operator;  // 注意：这种情况下可能需要进一步处理
+                                relationships.push({
+                                    sourceIds: [chain[0]],
+                                    targetId: chain[1],
+                                    chainFunctions: chain.map(function(id) { return functionVertices[id]; }),
+                                    relationshipType: '带运算符的简单关系',
+                                    combinedFunction: combinedExpr
+                                });
+                            }
+                        } else {
+                            // 原来的简单相加逻辑
+                            var sourceExpr = functionVertices[chain[0]].includes('=') 
+                                ? functionVertices[chain[0]].split('=')[1].trim() 
+                                : functionVertices[chain[0]];
+                            var targetExpr = functionVertices[chain[1]].includes('=') 
+                                ? functionVertices[chain[1]].split('=')[1].trim() 
+                                : functionVertices[chain[1]];
+                            
+                            var combinedExpr = 'y = ' + sourceExpr + ' + ' + targetExpr;
+                            
+                            relationships.push({
+                                sourceIds: [chain[0]],
+                                targetId: chain[1],
+                                chainFunctions: chain.map(function(id) { return functionVertices[id]; }),
+                                relationshipType: '简单相加',
+                                combinedFunction: combinedExpr
+                            });
+                        }
+                    }
                 });
-            }
-        }
-    });
-    
-    return relationships;
-},
+                
+                return relationships;
+            },
 
             // 识别函数链式关系
             identifyFunctionChains: function(edges, functionVertices) {
@@ -790,30 +792,32 @@ identifyFunctionRelationships: function() {
                 }
                 
                 // 构建结果HTML
-                var resultHTML = '<h4>函数关系（箭头连接表示相加）：</h4><ul>';
+                var resultHTML = '<h4>函数关系：</h4><ul>';
                 relationships.forEach(function(rel, index) {
-                    if (rel.chainFunctions) {
-                        // 显示链式关系
-                        resultHTML += '<li>' + 
-                            '<strong>链式关系 ' + (index + 1) + '</strong>: ' +
-                            rel.chainFunctions.join(' → ') + '<br>' +
-                            '<em>组合函数:</em> <strong>' + rel.combinedFunction + '</strong>' +
-                            '<button onclick="MathGraphApp.drawFunction(\'' + 
-                            rel.combinedFunction + '\', 200, ' + (100 + index * 50) + ')" ' +
-                            'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">绘制</button>' +
-                            '</li>';
-                    } else {
-                        // 显示普通关系
-                        resultHTML += '<li>' + 
-                            '<strong>关系 ' + (index + 1) + '</strong>: ' +
-                            rel.sourceFunc + ' → ' + rel.targetFunc + '<br>' +
-                            '<em>组合函数:</em> <strong>' + rel.combinedFunction + '</strong>' +
-                            '<button onclick="MathGraphApp.drawFunction(\'' + 
-                            rel.combinedFunction + '\', 200, ' + (100 + index * 50) + ')" ' +
-                            'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">绘制</button>' +
-                            '</li>';
+                    var expr = rel.combinedFunction;
+                    if (expr.includes('=')) {// 提取纯函数表达式
+                        expr = expr.split('=')[1].trim();
                     }
-                });
+                if (rel.chainFunctions) {
+                    // 显示链式关系
+                    resultHTML += '<li>' + 
+                        '<strong>链式关系 ' + (index + 1) + '</strong>: ' +
+                        rel.chainFunctions.join(' → ') + '<br>' +
+                        '<em>组合函数:</em> <strong>' + rel.combinedFunction + '</strong>' +
+                        '<button onclick="window.location.href = \'aaa.html?function=' + encodeURIComponent(expr) + '\'" ' +
+                        'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">绘制</button>' +
+                        '</li>';
+                } else {
+                    // 显示普通关系
+                    resultHTML += '<li>' + 
+                        '<strong>关系 ' + (index + 1) + '</strong>: ' +
+                        rel.sourceFunc + ' → ' + rel.targetFunc + '<br>' +
+                        '<em>组合函数:</em> <strong>' + rel.combinedFunction + '</strong>' +
+                        '<button onclick="window.location.href = \'aaa.html?function=' + encodeURIComponent(expr) + '\'" ' +
+                        'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">绘制</button>' +
+                        '</li>';
+                }
+            });
                 resultHTML += '</ul>';
                 
                 resultDiv.innerHTML += resultHTML;
@@ -837,33 +841,6 @@ identifyFunctionRelationships: function() {
                 return 'y = ' + expr1 + ' + ' + expr2;
             },
             
-            // 显示函数关系和组合函数
-            displayFunctionRelationships: function() {
-                var relationships = this.identifyFunctionRelationships();
-                var resultDiv = document.getElementById('functionsResult');
-                
-                if (relationships.length === 0) {
-                    resultDiv.innerHTML = '<p><strong>未检测到函数之间的连接关系</strong></p>';
-                    return;
-                }
-                
-                // 构建结果HTML
-                var resultHTML = '<h4>函数关系（箭头连接表示相加）：</h4><ul>';
-                relationships.forEach(function(rel, index) {
-                    resultHTML += '<li>' + 
-                        '<strong>关系 ' + (index + 1) + '</strong>: ' +
-                        rel.sourceFunc + ' → ' + rel.targetFunc + '<br>' +
-                        '<em>组合函数:</em> <strong>' + rel.combinedFunction + '</strong>' +
-                        '<button onclick="MathGraphApp.drawFunction(\'' + 
-                        rel.combinedFunction + '\', 200, ' + (100 + index * 50) + ')" ' +
-                        'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">绘制</button>' +
-                        '</li>';
-                });
-                resultHTML += '</ul>';
-                
-                resultDiv.innerHTML = resultHTML;
-                return relationships;
-            },
             
             // 获取随机颜色
             getRandomColor: function() {
@@ -883,12 +860,12 @@ identifyFunctionRelationships: function() {
         <!-- 左侧工具栏 -->
         <div class="toolbar">
             <h3>常用函数</h3>
-            <div class="function-item" data-function="Y = sin(X)">Y = sin(X)</div>
-            <div class="function-item" data-function="Y = cos(X)">Y = cos(X)</div>
-            <div class="function-item" data-function="Y = tan(X)">Y = tan(X)</div>
-            <div class="function-item" data-function="Y = X">Y = X</div>
-            <div class="function-item" data-function="Y = X^2">Y = X²</div>
-            <div class="function-item" data-function="Y = X^3">Y = X³</div>
+            <div class="function-item" data-function="Y = sin(x)">Y = sin(x)</div>
+            <div class="function-item" data-function="Y = cos(x)">Y = cos(x)</div>
+            <div class="function-item" data-function="Y = tan(x)">Y = tan(x)</div>
+            <div class="function-item" data-function="Y = x">Y = x</div>
+            <div class="function-item" data-function="Y = x^2">Y = x²</div>
+            <div class="function-item" data-function="Y = x^3">Y = x³</div>
             <div class="function-item" data-function="Y = 1/x">Y = 1/x</div>
             <div class="function-item" data-function="Y = e^x">Y = eˣ</div>
             <div class="function-item" data-function="Y = ln(x)">Y = ln(x)</div>
