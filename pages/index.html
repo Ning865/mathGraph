@@ -471,7 +471,7 @@
                 });
             },
             
-            // 绘制函数图像（改进版）
+            //绘制函数图像（改进版）
             drawFunction: function(functionStr, x, y) {
                 var graph = this.graph;
                 var parent = this.parent;
@@ -499,54 +499,13 @@
                     graph.getModel().endUpdate();
                 }
             },
-            
-            // 识别并获取画布上所有函数
-            identifyFunctions: function() {
-                var graph = this.graph;
-                var model = graph.getModel();
-                var cells = model.cells;
-                var functions = [];
                 
-                // 遍历所有单元格
-                for (var key in cells) {
-                    if (cells.hasOwnProperty(key)) {
-                        var cell = cells[key];
-                        
-                        // 检查是否为函数顶点（包含函数表达式）
-                        if (cell.value && typeof cell.value === 'string') {
-                            // 提取函数表达式（去除ID部分）
-                            var content = cell.value.toString();
-                            var functionStr = content.split('\n')[0].trim();
-                            
-                            // 检查是否是有效的函数表达式
-                            if (functionStr && (functionStr.includes('=') || 
-                                functionStr.includes('sin') || 
-                                functionStr.includes('cos') || 
-                                functionStr.includes('tan') ||
-                                functionStr.includes('x^'))) {
-                                
-                                functions.push({
-                                    id: cell.id,
-                                    expression: functionStr,
-                                    x: cell.geometry ? cell.geometry.x : 0,
-                                    y: cell.geometry ? cell.geometry.y : 0,
-                                    isCombined: functionStr.includes('+') // 标记是否为组合函数
-                                });
-                            }
-                        }
-                    }
-                }
-                
-                return functions;
-            },
-            
             // 验证函数表达式
             validateFunction: function(functionStr) {
                 // 简单验证，确保包含必要的字符
                 return functionStr && typeof functionStr === 'string' && functionStr.length > 0;
             },
             
-            // 识别函数之间的关系（支持链式合并）
             // 识别函数之间的关系（支持带运算符的链式合并）
             identifyFunctionRelationships: function() {
                 var graph = this.graph;
@@ -823,25 +782,7 @@
                 resultDiv.innerHTML += resultHTML;
                 return relationships;
             },
-            
-            // 生成两个函数相加的组合函数表达式
-            generateCombinedFunction: function(func1, func2) {
-                // 提取函数表达式部分（去除y = 部分）
-                var extractExpression = function(func) {
-                    if (func.includes('=')) {
-                        return func.split('=')[1].trim();
-                    }
-                    return func;
-                };
-                
-                var expr1 = extractExpression(func1);
-                var expr2 = extractExpression(func2);
-                
-                // 创建组合函数表达式
-                return 'y = ' + expr1 + ' + ' + expr2;
-            },
-            
-            
+  
             // 获取随机颜色
             getRandomColor: function() {
                 // 使用更高效的随机颜色生成方式
