@@ -544,7 +544,7 @@
                 return functionStr && typeof functionStr === 'string' && functionStr.length > 0;
             },
             
-            // 识别函数之间的关系（连接）
+            // 识别函数之间的关系（支持链式合并）
             identifyFunctionRelationships: function() {
                 var graph = this.graph;
                 var model = graph.getModel();
@@ -567,31 +567,159 @@
                     }
                 }
                 
-                // 检测边（连接）
+                // 构建边的映射关系
+                var edges = [];
                 for (var key in cells) {
                     if (cells.hasOwnProperty(key)) {
                         var cell = cells[key];
-                        // 检查是否为边（箭头连接）
                         if (cell.source && cell.target && functionVertices[cell.source.id] && functionVertices[cell.target.id]) {
-                            // 提取源函数和目标函数
-                            var sourceFunc = functionVertices[cell.source.id];
-                            var targetFunc = functionVertices[cell.target.id];
-                            
-                            // 创建相加关系
-                            var combinedFunc = this.generateCombinedFunction(sourceFunc, targetFunc);
-                            
-                            relationships.push({
+                            edges.push({
                                 sourceId: cell.source.id,
-                                sourceFunc: sourceFunc,
                                 targetId: cell.target.id,
-                                targetFunc: targetFunc,
-                                relationshipType: '相加',
-                                combinedFunction: combinedFunc
+                                sourceFunc: functionVertices[cell.source.id],
+                                targetFunc: functionVertices[cell.target.id]
                             });
                         }
                     }
                 }
                 
+                // 识别链式关系并合并
+                var chains = this.identifyFunctionChains(edges, functionVertices);
+                
+                // 为每个链创建组合函数关系
+                chains.forEach(function(chain) {
+                    if (chain.length >= 2) {
+                        var expressions = chain.map(function(id) {
+                            var func = functionVertices[id];
+                            // 提取表达式部分
+                            if (func.includes('=')) {
+                                return func.split('=')[1].trim();
+                            }
+                            return func;
+                        });
+                        
+                        // 创建完整的组合函数表达式
+                        var combinedExpr = 'y = ' + expressions.join(' + ');
+                        
+                        // 添加到关系数组
+                        relationships.push({
+                            sourceIds: chain.slice(0, -1), // 所有源函数ID
+                            targetId: chain[chain.length - 1], // 最终目标函数ID
+                            chainFunctions: chain.map(function(id) { return functionVertices[id]; }), // 链中的所有函数
+                            relationshipType: '链式相加',
+                            combinedFunction: combinedExpr
+                        });
+                    }
+                });
+                
+                return relationships;
+            },
+
+            // 识别函数链式关系
+            identifyFunctionChains: function(edges, functionVertices) {
+                // 构建图的邻接表表示
+                var adjacencyList = {};
+                var allVertices = Object.keys(functionVertices);
+                
+                // 初始化邻接表
+                allVertices.forEach(function(id) {
+                    adjacencyList[id] = [];
+                });
+                
+                // 填充邻接表
+                edges.forEach(function(edge) {
+                    adjacencyList[edge.sourceId].push(edge.targetId);
+                });
+                
+                // 找出所有链
+                var chains = [];
+                var visited = {};
+                
+                // 深度优先搜索找出链
+                function dfs(current, path) {
+                    visited[current] = true;
+                    path.push(current);
+                    
+                    var neighbors = adjacencyList[current];
+                    if (neighbors.length === 0) {
+                        // 如果是链的末端，保存链
+                        if (path.length > 1) {
+                            chains.push(path.slice());
+                        }
+                    } else {
+                        neighbors.forEach(function(neighbor) {
+                            if (!visited[neighbor]) {
+                                dfs(neighbor, path);
+                            }
+                        });
+                    }
+                    
+                    path.pop();
+                }
+                
+                // 对每个未访问的顶点开始DFS
+                allVertices.forEach(function(id) {
+                    // 检查是否是链的起点（没有入边的顶点）
+                    var isStart = edges.every(function(edge) {
+                        return edge.targetId !== id;
+                    });
+                    
+                    if (isStart && !visited[id]) {
+                        dfs(id, []);
+                    }
+                });
+                
+                // 如果没有找到链，尝试其他可能的路径
+                if (chains.length === 0 && edges.length > 0) {
+                    // 找到一个起始点进行DFS
+                    allVertices.forEach(function(id) {
+                        if (!visited[id]) {
+                            dfs(id, []);
+                        }
+                    });
+                }
+                
+                return chains;
+            },
+
+            // 修改显示函数关系的方法
+            displayFunctionRelationships: function() {
+                var relationships = this.identifyFunctionRelationships();
+                var resultDiv = document.getElementById('functionsResult');
+                
+                if (relationships.length === 0) {
+                    resultDiv.innerHTML += '<p><strong>未检测到函数之间的连接关系</strong></p>';
+                    return;
+                }
+                
+                // 构建结果HTML
+                var resultHTML = '<h4>函数关系（箭头连接表示相加）：</h4><ul>';
+                relationships.forEach(function(rel, index) {
+                    if (rel.chainFunctions) {
+                        // 显示链式关系
+                        resultHTML += '<li>' + 
+                            '<strong>链式关系 ' + (index + 1) + '</strong>: ' +
+                            rel.chainFunctions.join(' → ') + '<br>' +
+                            '<em>组合函数:</em> <strong>' + rel.combinedFunction + '</strong>' +
+                            '<button onclick="MathGraphApp.drawFunction(\'' + 
+                            rel.combinedFunction + '\', 200, ' + (100 + index * 50) + ')" ' +
+                            'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">绘制</button>' +
+                            '</li>';
+                    } else {
+                        // 显示普通关系
+                        resultHTML += '<li>' + 
+                            '<strong>关系 ' + (index + 1) + '</strong>: ' +
+                            rel.sourceFunc + ' → ' + rel.targetFunc + '<br>' +
+                            '<em>组合函数:</em> <strong>' + rel.combinedFunction + '</strong>' +
+                            '<button onclick="MathGraphApp.drawFunction(\'' + 
+                            rel.combinedFunction + '\', 200, ' + (100 + index * 50) + ')" ' +
+                            'style="margin-left: 10px; padding: 2px 8px; font-size: 12px;">绘制</button>' +
+                            '</li>';
+                    }
+                });
+                resultHTML += '</ul>';
+                
+                resultDiv.innerHTML += resultHTML;
                 return relationships;
             },
             
@@ -668,6 +796,10 @@
             <div class="function-item" data-function="Y = e^x">Y = eˣ</div>
             <div class="function-item" data-function="Y = ln(x)">Y = ln(x)</div>
             <div class="function-item" data-function="Y = |x|">Y = |x|</div>
+            <div class="function-item" data-function="+">+</div>
+            <div class="function-item" data-function="-">-</div>
+            <div class="function-item" data-function="*">*</div>
+            <div class="function-item" data-function="/">/</div>
         </div>
         
         <!-- 右侧主区域 -->
