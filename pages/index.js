@@ -31,6 +31,7 @@ var MathGraphApp = {
         // 初始化功能模块
         this.initDragAndDrop();
         this.initFunctionRelationships();
+
     },
     
     // 初始化图形设置
