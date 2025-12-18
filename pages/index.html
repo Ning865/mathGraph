@@ -1,66 +1,69 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>数学函数绘图工具</title>
-    <link rel="stylesheet" href="index.css">
-    
-    <!-- 设置库的基路径 -->
-    <script type="text/javascript">
-        mxBasePath = '../node_modules/mxgraph/javascript/src';
-    </script>
-    
-    <!-- 加载并初始化库 -->
-    <script type="text/javascript" src="../node_modules/mxgraph/javascript/mxClient.js"></script>
-    
-    <!-- 引入外部JavaScript文件 -->
-    <script type="text/javascript" src="index.js"></script>
-    </script>
+  <title>数学函数绘图工具</title>
+  <link rel="stylesheet" href="index.css">
+
+  <!-- 设置库的基路径 -->
+  <script type="text/javascript">
+    mxBasePath = '../node_modules/mxgraph/javascript/src';
+  </script>
+
+  <!-- 加载并初始化库 -->
+  <script type="text/javascript" src="../node_modules/mxgraph/javascript/mxClient.js"></script>
+
+  <!-- 引入外部JavaScript文件 -->
+  <script type="text/javascript" src="index.js"></script>
+  </script>
 </head>
+
 <body>
-    <div class="container">
-        <!-- 左侧工具栏 -->
-        <div class="toolbar">
-            <h3>常用函数</h3>
-            <div class="function-item" data-function="Y = sin(x)">Y = sin(x)</div>
-            <div class="function-item" data-function="Y = cos(x)">Y = cos(x)</div>
-            <div class="function-item" data-function="Y = tan(x)">Y = tan(x)</div>
-            <div class="function-item" data-function="Y = x">Y = x</div>
-            <div class="function-item" data-function="Y = x^2">Y = x²</div>
-            <div class="function-item" data-function="Y = x^3">Y = x³</div>
-            <div class="function-item" data-function="Y = 1/x">Y = 1/x</div>
-            <div class="function-item" data-function="Y = e^x">Y = eˣ</div>
-            <div class="function-item" data-function="Y = ln(x)">Y = ln(x)</div>
-            <div class="function-item" data-function="Y = |x|">Y = |x|</div>
-            <div class="function-item" data-function="+">+</div>
-            <div class="function-item" data-function="-">-</div>
-            <div class="function-item" data-function="*">*</div>
-            <div class="function-item" data-function="/">/</div>
-        </div>
-        
-        <!-- 右侧主区域 -->
-        <div class="main-area">
-            <!-- 输入区域 -->
-            <div class="input-area">
-                <h3>数学函数绘图工具</h3>
-                
-                <!-- 函数操作区域 -->
-                <h4>函数操作</h4>
-                <div class="button-group">
-                    <button id="deleteSelectedButton" onclick="MathGraphApp.deleteSelectedCells()">🗑️ 删除选中函数</button>
-                    <button id="identifyRelationshipsButton">🔗 识别函数关系</button>
-                </div>
-                
-                <!-- <p class="tip-text">提示：右键点击图形元素可快速删除，拖拽函数到画布进行绘制</p> -->
-                
-                <!-- 结果显示区域 -->
-                <div id="functionsResult"></div>
-            </div>
-            
-            <!-- 图形的容器 -->
-            <div class="graph-container">
-                <div id="graphContainer"></div>
-            </div>
-        </div>
+  <div class="container">
+    <!-- 左侧工具栏 -->
+    <div class="toolbar">
+      <h3>常用函数</h3>
+      <div class="function-item" data-function="Y = sin(x)">Y = sin(x)</div>
+      <div class="function-item" data-function="Y = cos(x)">Y = cos(x)</div>
+      <div class="function-item" data-function="Y = tan(x)">Y = tan(x)</div>
+      <div class="function-item" data-function="Y = x">Y = x</div>
+      <div class="function-item" data-function="Y = x^2">Y = x²</div>
+      <div class="function-item" data-function="Y = x^3">Y = x³</div>
+      <div class="function-item" data-function="Y = 1/x">Y = 1/x</div>
+      <div class="function-item" data-function="Y = e^x">Y = eˣ</div>
+      <div class="function-item" data-function="Y = ln(x)">Y = ln(x)</div>
+      <div class="function-item" data-function="Y = |x|">Y = |x|</div>
+      <div class="function-item" data-function="+">+</div>
+      <div class="function-item" data-function="-">-</div>
+      <div class="function-item" data-function="*">*</div>
+      <div class="function-item" data-function="/">/</div>
     </div>
+
+    <!-- 右侧主区域 -->
+    <div class="main-area">
+      <!-- 输入区域 -->
+      <div class="input-area">
+        <h3>数学函数绘图工具</h3>
+
+        <!-- 函数操作区域 -->
+        <h4>函数操作</h4>
+        <div class="button-group">
+          <button id="deleteSelectedButton" onclick="MathGraphApp.deleteSelectedCells()">🗑️ 删除选中函数</button>
+          <button id="identifyRelationshipsButton">🔗 识别函数关系</button>
+        </div>
+
+        <!-- <p class="tip-text">提示：右键点击图形元素可快速删除，拖拽函数到画布进行绘制</p> -->
+
+        <!-- 结果显示区域 -->
+        <div id="functionsResult"></div>
+      </div>
+
+      <!-- 图形的容器 -->
+      <div class="graph-container">
+        <div id="graphContainer"></div>
+      </div>
+    </div>
+  </div>
 </body>
+
 </html>
