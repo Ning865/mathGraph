@@ -8,12 +8,15 @@ function getFunctionFromUrl() {
   return newResult || 'sin(x)+cos(x)'; // 默认函数
 }
 
-// 导出HTML代码功能
-function bindExportHTML() {
-  const exportButton = document.getElementById('exportHTMLButton');
-  if (exportButton) {
-    exportButton.addEventListener('click', exportAsHTML);
-  }
+function downloadFile(dataUrl, filename) {
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = filename;
+  link.style.display = 'none';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 // 导出当前图形为完整的HTML文件
@@ -124,24 +127,110 @@ function exportAsHTML() {
 </body>
 </html>`;
 
-  // 创建Blob对象
   const blob = new Blob([htmlContent], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
+  downloadFile(url, `function-graph-${Date.now()}.html`)
+}
 
-  // 创建下载链接
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `function-graph-${Date.now()}.html`;
+/**
+ * 将当前函数图像（SVG）导出为 PNG 图片文件
+ */
+function exportAsImage() {
+  try {
+    console.log('开始导出PNG图片...');
 
-  // 触发下载
-  document.body.appendChild(a);
-  a.click();
+    // 1. 获取function-plot创建的SVG元素
+    const svgElement = document.querySelector('#my-graph svg');
+    if (!svgElement) {
+      console.error('找不到SVG元素');
+      alert('无法找到函数图像，请确保图像已加载完成');
+      return;
+    }
 
-  // 清理
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 0);
+    console.log('找到SVG元素');
+
+    // 2. 克隆SVG元素，避免修改原始元素
+    const clonedSvg = svgElement.cloneNode(true);
+
+    // 3. 设置SVG的明确尺寸（function-plot可能使用百分比）
+    const svgWidth = parseInt(svgElement.getAttribute('width')) || window.innerWidth;
+    const svgHeight = parseInt(svgElement.getAttribute('height')) || window.innerHeight;
+
+    clonedSvg.setAttribute('width', svgWidth);
+    clonedSvg.setAttribute('height', svgHeight);
+    clonedSvg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+
+    // 4. 确保SVG有白色背景
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', '0');
+    rect.setAttribute('y', '0');
+    rect.setAttribute('width', svgWidth);
+    rect.setAttribute('height', svgHeight);
+    rect.setAttribute('fill', 'white');
+    clonedSvg.insertBefore(rect, clonedSvg.firstChild);
+
+    // 5. 将SVG转换为字符串
+    const svgString = new XMLSerializer().serializeToString(clonedSvg);
+
+    // 6. 创建Canvas并绘制SVG
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // 设置高清画布（2倍缩放）
+    const scale = 2;
+    canvas.width = svgWidth * scale;
+    canvas.height = svgHeight * scale;
+
+    // 创建Image对象
+    const img = new Image();
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      try {
+        // 绘制图像到Canvas（高质量渲染）
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // 转换为PNG Data URL
+        const pngDataUrl = canvas.toDataURL('image/png');
+
+        // 生成文件名
+        const functionExpression = getFunctionFromUrl();
+        const safeFilename = functionExpression
+          .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')
+          .substring(0, 30);
+
+        const filename = `函数图像_${safeFilename}_${Date.now()}.png`;
+
+        // 下载文件
+        downloadFile(pngDataUrl, filename);
+
+        console.log('PNG图片导出完成:', filename);
+
+        // 清理URL对象
+        URL.revokeObjectURL(url);
+
+      } catch (error) {
+        console.error('Canvas绘制失败:', error);
+        alert('导出图片失败: ' + error.message);
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    img.onerror = (error) => {
+      console.error('SVG加载失败:', error);
+      alert('SVG图像加载失败，无法导出图片');
+      URL.revokeObjectURL(url);
+    };
+
+    img.src = url;
+
+  } catch (error) {
+    console.error('导出PNG图片失败:', error);
+    alert('导出图片失败: ' + error.message);
+  }
 }
 
 // 显示当前函数表达式
@@ -150,16 +239,6 @@ function displayCurrentFunction() {
   const expressionElement = document.getElementById('functionExpression');
   if (expressionElement) {
     expressionElement.textContent = '函数: ' + functionExpression;
-  }
-}
-
-// 设置返回按钮功能
-function setupReturnButton() {
-  const returnButton = document.getElementById('returnButton');
-  if (returnButton) {
-    returnButton.addEventListener('click', function () {
-      window.location.href = 'index.html';
-    });
   }
 }
 
@@ -197,12 +276,12 @@ function resizePlot() {
 
 
 resizePlot();
+displayCurrentFunction();
+
 // 窗口大小变化时重新绘制
 window.addEventListener('resize', resizePlot);
 
 // 绑定事件
-setupReturnButton();
-bindExportHTML();
-
-// 显示当前函数表达式
-displayCurrentFunction();
+document.getElementById('returnButton').addEventListener('click', () => window.location.href = 'index.html');
+document.getElementById('exportHTMLButton').addEventListener('click', exportAsHTML);
+document.getElementById('exportImageButton').addEventListener('click', () => exportAsImage());
