@@ -1,4 +1,5 @@
 import GraphManager from './modules/graph-manager.js';
+import FunctionManager from './modules/function-manager.js';
 import {
   extractExpression,
   isValidFunction,
@@ -8,11 +9,13 @@ class MathGraphApp {
 
   // 获取 div 容器，作为图形容器
   constructor(container) {
-
     this.graphManager = new GraphManager(container);
     this.graph = this.graphManager.getGraph();
     this.parent = this.graphManager.getParent();
-    this.graphManager.onRightClick = (x, y) => this.showContextMenu(x, y);;
+
+    this.functionManager = new FunctionManager(this.graph);
+
+    this.graphManager.onRightClick = this.showContextMenu.bind(this);
 
     this.initContextMenu();
     this.initDragAndDrop();
@@ -82,7 +85,8 @@ class MathGraphApp {
       let rect = graphContainer.getBoundingClientRect();
       let x = evt.clientX - rect.left;
       let y = evt.clientY - rect.top;
-      self.drawFunction(functionStr, x, y);
+
+      self.functionManager.drawFunction(functionStr, x, y);
     });
   }
 
@@ -94,69 +98,6 @@ class MathGraphApp {
     document.getElementById('identifyRelationshipsButton').addEventListener('click', function () {
       self.displayFunctionRelationships();
     });
-  }
-
-  // 绘制函数图像
-  drawFunction(funcStr, x, y) {
-    let graph = this.graph;
-    let parent = this.parent;
-
-    // 验证函数表达式
-    if (!isValidFunction(funcStr)) {
-      alert('函数表达式无效');
-      return;
-    }
-
-    graph.getModel().beginUpdate();
-    try {
-      // 生成唯一ID
-      let timestamp = Date.now();
-      let vertexId = funcStr.replace(/[^a-z0-9]/g, ' ');
-
-      // 在顶点内容中显示函数表达式和ID
-      let vertexContent = funcStr + '\n(ID: ' + vertexId + ')';
-      if (funcStr.includes('=')) {
-        graph.insertVertex(parent, vertexId, vertexContent, x, y, 150, 100, 'fillColor=white;strokeColor=blue;');
-      }
-      else graph.insertVertex(parent, vertexId, vertexContent, x, y, 100, 50, 'fillColor=white;strokeColor=blue;strokeWidth=2;shape=ellipse;');
-
-    } finally {
-      graph.getModel().endUpdate();
-    }
-  }
-
-  // 识别并获取画布上所有函数
-  identifyFunctions() {
-    let graph = this.graph;
-    let model = graph.getModel();
-    let cells = model.cells;
-    let functions = [];
-
-    // 遍历所有单元格
-    for (let key in cells) {
-      if (cells.hasOwnProperty(key)) {
-        let cell = cells[key];
-
-        // 检查是否为函数顶点（包含函数表达式）
-        if (cell.value && typeof cell.value === 'string') {
-          // 提取函数表达式（去除ID部分）
-          let content = cell.value.toString();
-          let funcStr = content.split('\n')[0].trim();
-
-          if (isValidFunction(funcStr)) {
-            functions.push({
-              id: cell.id,
-              expression: funcStr,
-              x: cell.geometry ? cell.geometry.x : 0,
-              y: cell.geometry ? cell.geometry.y : 0,
-              isCombined: funcStr.includes('+') // 标记是否为组合函数
-            });
-          }
-        }
-      }
-    }
-
-    return functions;
   }
 
   // 识别函数之间的关系（支持链式合并）
