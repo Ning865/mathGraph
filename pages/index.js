@@ -1,3 +1,4 @@
+import GraphManager from './modules/graph-manager.js';
 import {
   extractExpression,
   isValidFunction,
@@ -7,38 +8,15 @@ class MathGraphApp {
 
   // 获取 div 容器，作为图形容器
   constructor(container) {
-    mxEvent.disableContextMenu(container);
-    this.graph = new mxGraph(container);
-    this.parent = this.graph.getDefaultParent();
-    this.initGraphSettings();
+
+    this.graphManager = new GraphManager(container);
+    this.graph = this.graphManager.getGraph();
+    this.parent = this.graphManager.getParent();
+    this.graphManager.onRightClick = (x, y) => this.showContextMenu(x, y);;
+
     this.initContextMenu();
     this.initDragAndDrop();
     this.initFunctionRelationships();
-  }
-
-  // 初始化 mxGraph 设置
-  initGraphSettings() {
-    let graph = this.graph;
-    // 启用编辑功能
-    graph.setEnabled(true);
-    graph.setCellsResizable(true);
-    graph.setConnectable(true);
-    graph.connectionHandler.setCreateTarget(true);
-
-    // 启用橡皮筋选择
-    new mxRubberband(graph);
-
-    // 设置网格可见
-    graph.setGridEnabled(true);
-    graph.gridSize = 10;
-
-    // 创建坐标系样式
-    let style = graph.getStylesheet().getDefaultVertexStyle();
-    style.shape = 'stroke';
-    style.perimeter = mxPerimeter.RectanglePerimeter;
-
-    // 添加右键点击事件
-    this.addRightClickHandler();
   }
 
   // 初始化右键菜单
@@ -58,23 +36,6 @@ class MathGraphApp {
 
     // 点击其他地方隐藏菜单
     document.addEventListener('click', this.hideContextMenu.bind(this));
-  }
-
-  // 添加右键点击事件处理
-  addRightClickHandler() {
-    let self = this;
-    let container = this.graph.container;
-
-    // 监听右键点击事件
-    mxEvent.addListener(container, 'contextmenu', function (evt) {
-      evt.preventDefault();
-
-      // 获取点击位置
-      let pt = mxUtils.convertPoint(container, mxEvent.getClientX(evt), mxEvent.getClientY(evt));
-
-      // 显示右键菜单
-      self.showContextMenu(pt.x, pt.y);
-    });
   }
 
   // 显示右键菜单
