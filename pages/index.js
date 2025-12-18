@@ -1,8 +1,12 @@
+import {
+  extractExpression,
+  isValidFunction,
+} from './modules/utils/function-utils.js';
+
 class MathGraphApp {
 
   // 获取 div 容器，作为图形容器
   constructor(container) {
-
     mxEvent.disableContextMenu(container);
     this.graph = new mxGraph(container);
     this.parent = this.graph.getDefaultParent();
@@ -132,12 +136,12 @@ class MathGraphApp {
   }
 
   // 绘制函数图像
-  drawFunction(functionStr, x, y) {
+  drawFunction(funcStr, x, y) {
     let graph = this.graph;
     let parent = this.parent;
 
     // 验证函数表达式
-    if (!this.validateFunction(functionStr)) {
+    if (!isValidFunction(funcStr)) {
       alert('函数表达式无效');
       return;
     }
@@ -146,11 +150,11 @@ class MathGraphApp {
     try {
       // 生成唯一ID
       let timestamp = Date.now();
-      let vertexId = functionStr.replace(/[^a-z0-9]/g, ' ');
+      let vertexId = funcStr.replace(/[^a-z0-9]/g, ' ');
 
       // 在顶点内容中显示函数表达式和ID
-      let vertexContent = functionStr + '\n(ID: ' + vertexId + ')';
-      if (functionStr.includes('=')) {
+      let vertexContent = funcStr + '\n(ID: ' + vertexId + ')';
+      if (funcStr.includes('=')) {
         graph.insertVertex(parent, vertexId, vertexContent, x, y, 150, 100, 'fillColor=white;strokeColor=blue;');
       }
       else graph.insertVertex(parent, vertexId, vertexContent, x, y, 100, 50, 'fillColor=white;strokeColor=blue;strokeWidth=2;shape=ellipse;');
@@ -176,21 +180,15 @@ class MathGraphApp {
         if (cell.value && typeof cell.value === 'string') {
           // 提取函数表达式（去除ID部分）
           let content = cell.value.toString();
-          let functionStr = content.split('\n')[0].trim();
+          let funcStr = content.split('\n')[0].trim();
 
-          // 检查是否是有效的函数表达式
-          if (functionStr && (functionStr.includes('=') ||
-            functionStr.includes('sin') ||
-            functionStr.includes('cos') ||
-            functionStr.includes('tan') ||
-            functionStr.includes('x^'))) {
-
+          if (isValidFunction(funcStr)) {
             functions.push({
               id: cell.id,
-              expression: functionStr,
+              expression: funcStr,
               x: cell.geometry ? cell.geometry.x : 0,
               y: cell.geometry ? cell.geometry.y : 0,
-              isCombined: functionStr.includes('+') // 标记是否为组合函数
+              isCombined: funcStr.includes('+') // 标记是否为组合函数
             });
           }
         }
@@ -198,12 +196,6 @@ class MathGraphApp {
     }
 
     return functions;
-  }
-
-  // 验证函数表达式
-  validateFunction(functionStr) {
-    // 简单验证，确保包含必要的字符
-    return functionStr && typeof functionStr === 'string' && functionStr.length > 0;
   }
 
   // 识别函数之间的关系（支持链式合并）
@@ -221,12 +213,7 @@ class MathGraphApp {
         let content = cells[key].value.toString();
         let functionStr = content.split('\n')[0].trim();
         // 增加对运算符的识别
-        if (functionStr && (functionStr.includes('=') ||
-          functionStr.includes('sin') ||
-          functionStr.includes('cos') ||
-          functionStr.includes('tan') ||
-          functionStr.includes('x^') ||
-          ['+', '-', '*', '/'].includes(functionStr))) {
+        if (isValidFunction(functionStr)) {
           functionVertices[key] = functionStr;
         }
       }
@@ -266,13 +253,13 @@ class MathGraphApp {
 
         if (!isOperator && currentOperator === null) {
           // 第一个函数表达式
-          currentExpr = func.includes('=') ? func.split('=')[1].trim() : func;
+          currentExpr = extractExpression(func);
         } else if (isOperator) {
           // 运算符
           currentOperator = func;
         } else if (currentExpr !== null && currentOperator !== null) {
           // 第二个函数表达式，进行运算
-          let nextExpr = func.includes('=') ? func.split('=')[1].trim() : func;
+          let nextExpr = extractExpression(func);
 
           // 根据运算符类型构建表达式部分
           exprParts.push(currentExpr);
@@ -319,13 +306,8 @@ class MathGraphApp {
           ['+', '-', '*', '/'].includes(functionVertices[chain[1]]);
 
         if (hasOperator) {
-          // 如果包含运算符，尝试简单构建表达式
-          let expr1 = functionVertices[chain[0]].includes('=')
-            ? functionVertices[chain[0]].split('=')[1].trim()
-            : functionVertices[chain[0]];
-          let expr2 = functionVertices[chain[1]].includes('=')
-            ? functionVertices[chain[1]].split('=')[1].trim()
-            : functionVertices[chain[1]];
+          let expr1 = extractExpression(functionVertices[chain[0]]);
+          let expr2 = extractExpression(functionVertices[chain[1]]);
 
           // 确定哪个是运算符，哪个是表达式
           let operator = null;
@@ -351,12 +333,8 @@ class MathGraphApp {
           }
         } else {
           // 原来的简单相加逻辑
-          let sourceExpr = functionVertices[chain[0]].includes('=')
-            ? functionVertices[chain[0]].split('=')[1].trim()
-            : functionVertices[chain[0]];
-          let targetExpr = functionVertices[chain[1]].includes('=')
-            ? functionVertices[chain[1]].split('=')[1].trim()
-            : functionVertices[chain[1]];
+          let sourceExpr = extractExpression(functionVertices[chain[0]]);
+          let targetExpr = extractExpression(functionVertices[chain[1]]);
 
           let combinedExpr = 'y = ' + sourceExpr + ' + ' + targetExpr;
 
@@ -454,10 +432,7 @@ class MathGraphApp {
     // 构建结果HTML
     let resultHTML = '<h4>函数关系：</h4><ul>';
     relationships.forEach(function (rel, index) {
-      let expr = rel.combinedFunction;
-      if (expr.includes('=')) {// 提取纯函数表达式
-        expr = expr.split('=')[1].trim();
-      }
+      let expr = extractExpression(rel.combinedFunction);
       if (rel.chainFunctions) {
         // 显示链式关系
         resultHTML += '<li>' +
@@ -486,18 +461,8 @@ class MathGraphApp {
 
   // 生成两个函数相加的组合函数表达式
   generateCombinedFunction(func1, func2) {
-    // 提取函数表达式部分（去除y = 部分）
-    let extractExpression = function (func) {
-      if (func.includes('=')) {
-        return func.split('=')[1].trim();
-      }
-      return func;
-    };
-
     let expr1 = extractExpression(func1);
     let expr2 = extractExpression(func2);
-
-    // 创建组合函数表达式
     return 'y = ' + expr1 + ' + ' + expr2;
   }
 }
@@ -510,4 +475,3 @@ if (deleteButton) {
     mathGraphApp.deleteSelectedCells();
   });
 }
-
