@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const functionToPlot = getFunctionFromUrl();
 
     // 创建函数图像
-    functionPlot({
+    this.functionPlot({
       target: '#my-graph',
       width: window.innerWidth,  // 设置宽度为窗口宽度
       height: window.innerHeight, // 设置高度为窗口高度
