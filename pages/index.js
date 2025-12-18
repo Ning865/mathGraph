@@ -500,13 +500,6 @@ class MathGraphApp {
     // 创建组合函数表达式
     return 'y = ' + expr1 + ' + ' + expr2;
   }
-
-
-  // 获取随机颜色
-  getRandomColor() {
-    // 使用更高效的随机颜色生成方式
-    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-  }
 }
 
 let mathGraphApp = new MathGraphApp(document.getElementById('graphContainer'));
