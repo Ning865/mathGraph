@@ -1,7 +1,7 @@
 import {
   extractExpression,
   isValidFunction,
-} from './utils/function-utils.js';
+} from './function-utils.js';
 
 export default class FunctionManager {
   constructor(graph) {

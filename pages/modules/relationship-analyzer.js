@@ -1,4 +1,4 @@
-import { extractExpression, isValidFunction } from './utils/function-utils.js';
+import { extractExpression, isValidFunction } from './function-utils.js';
 
 export default class RelationshipAnalyzer {
   constructor(graph) {

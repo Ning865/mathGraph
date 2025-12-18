@@ -1,7 +1,7 @@
 import GraphManager from './modules/graph-manager.js';
 import FunctionManager from './modules/function-manager.js';
 import RelationshipAnalyzer from './modules/relationship-analyzer.js';
-import { extractExpression } from './modules/utils/function-utils.js';
+import { extractExpression } from './modules/function-utils.js';
 
 /**
  * 数学函数绘图应用主类
