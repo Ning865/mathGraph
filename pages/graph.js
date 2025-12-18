@@ -1,40 +1,28 @@
-// 等待页面加载完成后绘制函数图像
-document.addEventListener('DOMContentLoaded', function () {
-  // 显示当前函数表达式
-  function displayCurrentFunction() {
-    const functionExpression = getFunctionFromUrl();
-    const expressionElement = document.getElementById('functionExpression');
-    if (expressionElement) {
-      expressionElement.textContent = '函数: ' + functionExpression;
-    }
+// 从URL获取函数表达式参数
+function getFunctionFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const result = urlParams.get('function');
+  //将result中的e^x整体替换成可识别的Math.exp(x)，同时把 |x| 转换成Math.abs(x)
+  const newResult = result.replace(/e\^x/g, 'exp(x)').replace(/\|x\|/g, 'abs(x)');
+  console.log(newResult);
+  return newResult || 'sin(x)+cos(x)'; // 默认函数
+}
+
+// 导出HTML代码功能
+function bindExportHTML() {
+  const exportButton = document.getElementById('exportHTMLButton');
+  if (exportButton) {
+    exportButton.addEventListener('click', exportAsHTML);
   }
+}
 
-  // 设置返回按钮功能
-  function setupReturnButton() {
-    const returnButton = document.getElementById('returnButton');
-    if (returnButton) {
-      returnButton.addEventListener('click', function () {
-        // 跳转到索引页面
-        window.location.href = 'index.html';
-      });
-    }
-  }
+// 导出当前图形为完整的HTML文件
+function exportAsHTML() {
+  // 获取当前绘制的函数表达式
+  const functionExpression = getFunctionFromUrl();
 
-  // 导出HTML代码功能
-  function setupExportFunctionality() {
-    const exportButton = document.getElementById('exportButton');
-    if (exportButton) {
-      exportButton.addEventListener('click', exportGraphAsHTML);
-    }
-  }
-
-  // 导出当前图形为完整的HTML文件
-  function exportGraphAsHTML() {
-    // 获取当前绘制的函数表达式
-    const functionExpression = getFunctionFromUrl();
-
-    // 创建包含所有必要内容的HTML代码
-    const htmlContent = `<!DOCTYPE html>
+  // 创建包含所有必要内容的HTML代码
+  const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -136,79 +124,85 @@ document.addEventListener('DOMContentLoaded', function () {
 </body>
 </html>`;
 
-    // 创建Blob对象
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
+  // 创建Blob对象
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
 
-    // 创建下载链接
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `function-graph-${Date.now()}.html`;
+  // 创建下载链接
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `function-graph-${Date.now()}.html`;
 
-    // 触发下载
-    document.body.appendChild(a);
-    a.click();
+  // 触发下载
+  document.body.appendChild(a);
+  a.click();
 
-    // 清理
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 0);
+  // 清理
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 0);
+}
+
+// 显示当前函数表达式
+function displayCurrentFunction() {
+  const functionExpression = getFunctionFromUrl();
+  const expressionElement = document.getElementById('functionExpression');
+  if (expressionElement) {
+    expressionElement.textContent = '函数: ' + functionExpression;
   }
-  // 从URL获取函数表达式参数
-  function getFunctionFromUrl() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const result = urlParams.get('function');
-    //将result中的e^x整体替换成可识别的Math.exp(x)，同时把 |x| 转换成Math.abs(x)
-    const newResult = result.replace(/e\^x/g, 'exp(x)').replace(/\|x\|/g, 'abs(x)');
-    console.log(newResult);
-    return newResult || 'sin(x)+cos(x)'; // 默认函数
-  }
+}
 
-  // 监听窗口大小变化，动态调整图像
-  function resizePlot() {
-    // 获取要绘制的函数
-    const functionToPlot = getFunctionFromUrl();
-
-    // 创建函数图像
-    this.functionPlot({
-      target: '#my-graph',
-      width: window.innerWidth,  // 设置宽度为窗口宽度
-      height: window.innerHeight, // 设置高度为窗口高度
-      margin: {
-        top: 50,
-        right: 50,
-        bottom: 50,
-        left: 50
-      },
-      data: [{
-        fn: functionToPlot,
-        color: '#ff0000' // 红色曲线
-      }],
-      grid: true, // 显示网格
-      xAxis: {
-        label: 'X 轴',
-        domain: [-10, 10] // X轴范围
-      },
-      yAxis: {
-        label: 'Y 轴',
-        domain: [-5, 50] // Y轴范围
-      }
+// 设置返回按钮功能
+function setupReturnButton() {
+  const returnButton = document.getElementById('returnButton');
+  if (returnButton) {
+    returnButton.addEventListener('click', function () {
+      window.location.href = 'index.html';
     });
   }
+}
 
-  // 初始绘制
-  resizePlot();
+// 监听窗口大小变化，动态调整图像
+function resizePlot() {
+  // 获取要绘制的函数
+  const functionToPlot = getFunctionFromUrl();
 
-  // 窗口大小变化时重新绘制
-  window.addEventListener('resize', resizePlot);
+  // 创建函数图像
+  this.functionPlot({
+    target: '#my-graph',
+    width: window.innerWidth,  // 设置宽度为窗口宽度
+    height: window.innerHeight, // 设置高度为窗口高度
+    margin: {
+      top: 50,
+      right: 50,
+      bottom: 50,
+      left: 50
+    },
+    data: [{
+      fn: functionToPlot,
+      color: '#ff0000' // 红色曲线
+    }],
+    grid: true, // 显示网格
+    xAxis: {
+      label: 'X 轴',
+      domain: [-10, 10] // X轴范围
+    },
+    yAxis: {
+      label: 'Y 轴',
+      domain: [-5, 50] // Y轴范围
+    }
+  });
+}
 
-  // 设置导出功能
-  setupExportFunctionality();
 
-  // 设置返回按钮功能
-  setupReturnButton();
+resizePlot();
+// 窗口大小变化时重新绘制
+window.addEventListener('resize', resizePlot);
 
-  // 显示当前函数表达式
-  displayCurrentFunction();
-});
+// 绑定事件
+setupReturnButton();
+bindExportHTML();
+
+// 显示当前函数表达式
+displayCurrentFunction();
