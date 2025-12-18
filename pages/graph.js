@@ -233,6 +233,75 @@ function exportAsImage() {
   }
 }
 
+async function copyImage() {
+  try {
+    // 获取SVG元素
+    const svgElement = document.querySelector('#my-graph svg');
+    if (!svgElement) {
+      alert('请先等待函数图像加载完成');
+      return;
+    }
+
+    // 克隆并准备SVG
+    const clonedSvg = svgElement.cloneNode(true);
+    const svgWidth = parseInt(svgElement.getAttribute('width')) || window.innerWidth;
+    const svgHeight = parseInt(svgElement.getAttribute('height')) || window.innerHeight;
+
+    clonedSvg.setAttribute('width', svgWidth);
+    clonedSvg.setAttribute('height', svgHeight);
+    clonedSvg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+
+    // 添加白色背景
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', '0');
+    rect.setAttribute('y', '0');
+    rect.setAttribute('width', svgWidth);
+    rect.setAttribute('height', svgHeight);
+    rect.setAttribute('fill', 'white');
+    clonedSvg.insertBefore(rect, clonedSvg.firstChild);
+
+    // SVG转PNG
+    const svgString = new XMLSerializer().serializeToString(clonedSvg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const scale = 2;
+    canvas.width = svgWidth * scale;
+    canvas.height = svgHeight * scale;
+
+    const pngBlob = await new Promise((resolve) => {
+      const img = new Image();
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(url);
+          resolve(blob);
+        }, 'image/png', 1.0);
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+
+      img.src = url;
+    });
+
+    if (!pngBlob) throw new Error('无法生成PNG图片');
+
+    // 复制到剪贴板
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+
+    // 简单提示
+    alert('✅ 图像已复制到剪贴板');
+
+  } catch (error) {
+    alert('复制失败: ' + error.message);
+  }
+}
+
 // 显示当前函数表达式
 function displayCurrentFunction() {
   const functionExpression = getFunctionFromUrl();
@@ -285,3 +354,4 @@ window.addEventListener('resize', resizePlot);
 document.getElementById('returnButton').addEventListener('click', () => window.location.href = 'index.html');
 document.getElementById('exportHTMLButton').addEventListener('click', exportAsHTML);
 document.getElementById('exportImageButton').addEventListener('click', () => exportAsImage());
+document.getElementById('copyImageButton').addEventListener('click', () => copyImage());
