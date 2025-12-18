@@ -509,4 +509,12 @@ class MathGraphApp {
   }
 }
 
-new MathGraphApp(document.getElementById('graphContainer'));
+let mathGraphApp = new MathGraphApp(document.getElementById('graphContainer'));
+const deleteButton = document.getElementById('deleteSelectedButton');
+// 绑定删除事件
+if (deleteButton) {
+  deleteButton.addEventListener('click', () => {
+    mathGraphApp.deleteSelectedCells();
+  });
+}
+
