@@ -17,14 +17,50 @@ export function extractExpression(func) {
  * @returns {boolean} 是否有效
  */
 export function isValidFunction(funcStr) {
-  // 简单实现
-  return funcStr &&
-    typeof funcStr === 'string' &&
-    funcStr.length > 0 &&
-    (funcStr.includes('=') ||
-      funcStr.includes('sin') ||
-      funcStr.includes('cos') ||
-      funcStr.includes('tan') ||
-      funcStr.includes('x^') ||
-      ['+', '-', '*', '/'].includes(funcStr));
+  if (!funcStr || typeof funcStr !== 'string' || funcStr.length === 0) {
+    return false;
+  }
+  
+  // 如果是运算符，直接返回true
+  if (['+', '-', '*', '/'].includes(funcStr.trim())) {
+    return true;
+  }
+  
+  // 移除空白字符
+  const trimmed = funcStr.trim();
+  
+  // 检查是否包含等号
+  if (trimmed.includes('=')) {
+    return true;
+  }
+  
+  // 检查是否是有效的数学表达式
+  const mathPattern = /^[\d\s+xX\+\-\*\/\^\(\)\.,]+$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*sin[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*cos[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*tan[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*exp[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*abs[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*log[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*sqrt[\s\(\)xX\d\+\-\*\/\^\.,]*$/;
+  
+  return mathPattern.test(trimmed);
+}
+
+/**
+ * 解析用户输入的函数表达式
+ * @param {string} funcStr - 用户输入的函数字符串
+ * @returns {string|null} 解析后的函数字符串，无效则返回null
+ */
+export function parseUserFunction(funcStr) {
+  if (!isValidFunction(funcStr)) {
+    return null;
+  }
+  
+  let parsed = funcStr.trim();
+  
+  // 标准化函数表达式
+  parsed = parsed.replace(/e\^x/gi, 'e^x'); // 保持e^x形式
+  parsed = parsed.replace(/\|x\|/gi, 'abs(x)'); // 替换绝对值符号为abs(x)
+  parsed = parsed.replace(/x\^/gi, 'x^'); // 保持x^形式
+  
+  // 如果没有等号，添加Y = 前缀
+  if (!parsed.includes('=')) {
+    parsed = `Y = ${parsed}`;
+  }
+  
+  return parsed;
 }

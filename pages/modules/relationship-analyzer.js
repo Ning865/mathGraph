@@ -178,8 +178,39 @@ export default class RelationshipAnalyzer {
             combinedFunction: combinedExpr
           });
         }
+      } else if (chain.length === 1) {
+        // 单个函数的情况
+        const id = chain[0];
+        const func = functionVertices[id];
+        // 跳过运算符节点
+        if (!['+', '-', '*', '/'].includes(func)) {
+          relationships.push({
+            sourceIds: [id],
+            targetId: id,
+            chainFunctions: [func],
+            relationshipType: '单个函数',
+            combinedFunction: func.includes('=') ? func : `y = ${extractExpression(func)}`
+          });
+        }
       }
     });
+    
+    // 如果仍然没有关系，检查是否有未被链覆盖的单个函数
+    if (relationships.length === 0 && Object.keys(functionVertices).length > 0) {
+      Object.keys(functionVertices).forEach(id => {
+        const func = functionVertices[id];
+        // 跳过运算符节点
+        if (!['+', '-', '*', '/'].includes(func)) {
+          relationships.push({
+            sourceIds: [id],
+            targetId: id,
+            chainFunctions: [func],
+            relationshipType: '单个函数',
+            combinedFunction: func.includes('=') ? func : `y = ${extractExpression(func)}`
+          });
+        }
+      });
+    }
 
     return relationships;
   }
@@ -216,10 +247,8 @@ export default class RelationshipAnalyzer {
 
       const neighbors = adjacencyList[current];
       if (neighbors.length === 0) {
-        // 链的末端
-        if (path.length > 1) {
-          chains.push([...path]);
-        }
+        // 链的末端，保存当前路径（包括单个函数的情况）
+        chains.push([...path]);
       } else {
         neighbors.forEach(neighbor => {
           if (!visited[neighbor]) {

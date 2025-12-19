@@ -130,6 +130,42 @@ body {
     margin-bottom: 15px;
 }
 
+.custom-function {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+#customFunctionInput {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    color: var(--dark-color);
+    transition: var(--transition);
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    box-shadow: var(--shadow);
+}
+
+#customFunctionInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-hover);
+}
+
+#drawCustomFunctionButton {
+    background: linear-gradient(145deg, var(--secondary-color), #27ae60);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
 button {
     padding: 12px 20px;
     border: none;

@@ -1,7 +1,7 @@
 import GraphManager from './modules/graph-manager.js';
 import FunctionManager from './modules/function-manager.js';
 import RelationshipAnalyzer from './modules/relationship-analyzer.js';
-import { extractExpression } from './modules/function-utils.js';
+import { extractExpression, parseUserFunction } from './modules/function-utils.js';
 
 /**
  * 数学函数绘图应用主类
@@ -35,6 +35,9 @@ class MathGraphApp {
     this.initContextMenu();
     this.initDragAndDrop();
     this.initFunctionRelationships();
+    
+    // 初始化自定义函数功能
+    this.initCustomFunction();
   }
 
   /**
@@ -132,6 +135,62 @@ class MathGraphApp {
     });
   }
 
+  /**
+   * 初始化自定义函数功能
+   * 
+   * 绑定"绘制自定义函数"按钮的点击事件，点击后会解析用户输入的函数表达式
+   * 并将其绘制到画布上。
+   */
+  initCustomFunction() {
+    let self = this;
+    
+    // 获取自定义函数输入框和按钮
+    const input = document.getElementById('customFunctionInput');
+    const button = document.getElementById('drawCustomFunctionButton');
+    
+    // 添加点击事件监听器
+    button.addEventListener('click', function() {
+      self.handleCustomFunction(input.value);
+    });
+    
+    // 添加回车键监听器
+    input.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        self.handleCustomFunction(input.value);
+      }
+    });
+  }
+  
+  /**
+   * 处理自定义函数输入
+   * 
+   * 解析用户输入的函数表达式，验证其有效性，然后在画布上绘制该函数。
+   * @param {string} funcStr - 用户输入的函数表达式
+   */
+  handleCustomFunction(funcStr) {
+    // 解析函数表达式
+    const parsedFunc = parseUserFunction(funcStr);
+    
+    if (!parsedFunc) {
+      alert('请输入有效的函数表达式！');
+      return;
+    }
+    
+    // 在画布中心绘制函数
+    const graphContainer = document.getElementById('graphContainer');
+    const rect = graphContainer.getBoundingClientRect();
+    const x = rect.width / 2 - 50;
+    const y = rect.height / 2 - 25;
+    
+    // 绘制函数
+    this.functionManager.drawFunction(parsedFunc, x, y);
+    
+    // 清空输入框
+    document.getElementById('customFunctionInput').value = '';
+    
+    alert('自定义函数绘制成功！');
+  }
+  
   /**
    * 初始化函数关系功能
    * 

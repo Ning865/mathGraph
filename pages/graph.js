@@ -2,10 +2,21 @@
 function getFunctionFromUrl() {
   const urlParams = new URLSearchParams(window.location.search);
   const result = urlParams.get('function');
-  //将result中的e^x整体替换成可识别的Math.exp(x)，同时把 |x| 转换成Math.abs(x)
-  const newResult = result.replace(/e\^x/g, 'exp(x)').replace(/\|x\|/g, 'abs(x)');
-  console.log(newResult);
-  return newResult || 'sin(x)+cos(x)'; // 默认函数
+  
+  if (!result) {
+    return 'sin(x)+cos(x)'; // 默认函数
+  }
+  
+  // 替换各种数学函数和运算符为function-plot可识别的格式
+  let newResult = result
+    .replace(/e\^([xX\(\)\d\+\-\*\/\^\.]+)/g, 'exp($1)') // 替换e^x或e^(...)为exp(x)或exp(...) 
+    .replace(/\|([^\|]*)\|/g, 'abs($1)') // 替换|x|为abs(x)
+    .replace(/x\^([xX\(\)\d\+\-\*\/\^\.]+)/g, 'pow(x, $1)') // 替换x^2为pow(x, 2)
+    .replace(/log\(([xX\(\)\d\+\-\*\/\^\.]+)\)/g, 'log($1)') // 确保log(x)格式正确
+    .replace(/sqrt\(([xX\(\)\d\+\-\*\/\^\.]+)\)/g, 'sqrt($1)'); // 确保sqrt(x)格式正确
+  
+  console.log('解析后的函数表达式:', newResult);
+  return newResult;
 }
 
 function downloadFile(dataUrl, filename) {
