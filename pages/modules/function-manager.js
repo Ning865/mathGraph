@@ -29,10 +29,10 @@ export default class FunctionManager {
     graph.getModel().beginUpdate();
 
     try {
-      // 生成唯一 ID
+      // 生成唯一 ID，使用随机数确保唯一性
       const timestamp = Date.now();
-      // vertexId = functionStr.replace(/[^a-z0-9]/g, ' ');
-      vertexId = `func_${funcStr.replace(/[^a-z0-9]/gi, '_')}_${timestamp}`;
+      const random = Math.floor(Math.random() * 10000);
+      vertexId = `func_${funcStr.replace(/[^a-z0-9]/gi, '_')}_${timestamp}_${random}`;
 
       // 在顶点内容中显示函数表达式和 ID
       const vertexContent = `${funcStr}\n(ID: ${vertexId})`;

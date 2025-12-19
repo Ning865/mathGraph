@@ -35,9 +35,17 @@ export function isValidFunction(funcStr) {
   }
   
   // 检查是否是有效的数学表达式
-  const mathPattern = /^[\d\s+xX\+\-\*\/\^\(\)\.,]+$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*sin[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*cos[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*tan[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*exp[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*abs[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*log[\s\(\)xX\d\+\-\*\/\^\.,]*$|^[\d\s+xX\+\-\*\/\^\(\)\.,]*sqrt[\s\(\)xX\d\+\-\*\/\^\.,]*$/;
+  // 简化正则表达式，允许更多的函数名和数学符号
+  const mathPattern = /^[\d\s+xX\+\-\*\/\^\(\)\.,a-zA-Z]+$/;
   
-  return mathPattern.test(trimmed);
+  // 检查是否包含等号或常见数学函数名
+  if (trimmed.includes('=') || 
+      trimmed.match(/(sin|cos|tan|exp|abs|log|sqrt|ln|e\^|\^)/i)) {
+    return mathPattern.test(trimmed);
+  }
+  
+  // 对于简单表达式，检查是否包含变量x
+  return trimmed.includes('x') || trimmed.includes('X');
 }
 
 /**

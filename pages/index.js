@@ -150,7 +150,18 @@ class MathGraphApp {
     
     // 添加点击事件监听器
     button.addEventListener('click', function() {
+      // 先移除画布的事件监听，防止影响输入框焦点
+      const graphContainer = document.getElementById('graphContainer');
+      const originalOnMouseDown = graphContainer.onmousedown;
+      graphContainer.onmousedown = null;
+      
+      // 处理自定义函数
       self.handleCustomFunction(input.value);
+      
+      // 恢复画布的事件监听
+      setTimeout(() => {
+        graphContainer.onmousedown = originalOnMouseDown;
+      }, 100);
     });
     
     // 添加回车键监听器
@@ -159,6 +170,9 @@ class MathGraphApp {
         self.handleCustomFunction(input.value);
       }
     });
+    
+    // 初始焦点设置
+    input.focus();
   }
   
   /**
@@ -172,7 +186,10 @@ class MathGraphApp {
     const parsedFunc = parseUserFunction(funcStr);
     
     if (!parsedFunc) {
-      alert('请输入有效的函数表达式！');
+      // 使用更友好的提示方式，避免影响焦点
+      console.warn('请输入有效的函数表达式！');
+      // 确保焦点仍在输入框
+      document.getElementById('customFunctionInput').focus();
       return;
     }
     
@@ -185,10 +202,13 @@ class MathGraphApp {
     // 绘制函数
     this.functionManager.drawFunction(parsedFunc, x, y);
     
-    // 清空输入框
-    document.getElementById('customFunctionInput').value = '';
+    // 清空输入框并重新设置焦点
+    const inputElement = document.getElementById('customFunctionInput');
+    inputElement.value = '';
+    inputElement.focus();
     
-    alert('自定义函数绘制成功！');
+    // 使用更友好的提示方式，避免影响焦点
+    console.log('自定义函数绘制成功！');
   }
   
   /**
