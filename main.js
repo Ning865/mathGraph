@@ -4,7 +4,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
-    autoHideMenuBar: true, // 自动隐藏菜单栏，按 Alt 临时显示
+    autoHideMenuBar: true, // 隐藏菜单栏
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false

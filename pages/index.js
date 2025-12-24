@@ -207,8 +207,6 @@ class MathGraphApp {
     inputElement.value = '';
     inputElement.focus();
     
-    // 使用更友好的提示方式，避免影响焦点
-    console.log('自定义函数绘制成功！');
   }
   
   /**

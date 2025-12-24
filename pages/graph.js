@@ -4,7 +4,7 @@ function getFunctionFromUrl() {
   const result = urlParams.get('function');
   
   if (!result) {
-    return 'sin(x)+cos(x)'; // 默认函数
+    return 'sin(x)'; // 默认函数
   }
   
   // 替换各种数学函数和运算符为function-plot可识别的格式

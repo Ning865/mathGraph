@@ -46,7 +46,7 @@ export default class FunctionManager {
         graph.insertVertex(parent, vertexId, vertexContent, x, y, 100, 50, style);
       }
 
-      console.log('函数绘制成功:', funcStr, 'ID:', vertexId);
+      //console.log('函数绘制成功:', funcStr, 'ID:', vertexId);
 
     } catch (error) {
       console.error('绘制函数失败:', error);
